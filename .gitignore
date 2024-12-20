@@ -1,6 +1,7 @@
 # Project Specific Files:
 
 .expo
+serviceAccountKey.json
 
 # ---------------------------------------------------------
 

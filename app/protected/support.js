@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, StyleSheet, Button } from "react-native";
-import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
-import { collection, getDocs, setDoc, getDoc, doc, updateDoc, deleteDoc, query, orderBy, limit, startAfter, where } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { collection, getDocs, setDoc, getDoc, doc, updateDoc, deleteDoc, query, orderBy, limit, startAfter, where, writeBatch } from "firebase/firestore";
 
 import { db, auth } from "@/firebaseConfig";
 
@@ -25,7 +25,7 @@ export default function Support() {
       const supportRef = collection(db, 'users');
       let q = query(
         supportRef,
-        where('role', 'not-in', ['admin', ]),
+        where('role', 'not-in', ['admin',]),
         where('support', '==', true),
         orderBy('name', 'asc'),
         limit(PAGE_SIZE)
@@ -34,7 +34,7 @@ export default function Support() {
       if (startDoc) {
         q = query(
           supportRef,
-          where('role', 'not-in', ['admin', ]),
+          where('role', 'not-in', ['admin',]),
           where('support', '==', true),
           orderBy('name', 'asc'),
           startAfter(startDoc),
@@ -117,7 +117,7 @@ export default function Support() {
       const userRef = doc(db, 'users', user.uid);
       await setDoc(userRef, {
         name: randomName,
-        role: 'member', 
+        role: 'member',
         support: true,
         affiliation: randomAffiliation,
         designation: randomDesignation,
@@ -164,7 +164,7 @@ export default function Support() {
     try {
       const supportDoc = doc(db, "users", id);
       await deleteDoc(supportDoc);
-      
+
       fetchSupport(null, true)
     } catch (error) {
       console.error("Error deleting support:", error);
@@ -192,6 +192,67 @@ export default function Support() {
     setLoading(false);
 
   }
+
+  const batchDeleteCollection = async () => {
+    const collectionPath = "users"
+    const batchSize = 500;
+
+    setLoading(true);
+
+    const collectionRef = collection(db, collectionPath);
+    const q = query(
+      collectionRef,
+      where('role', 'not-in', ['admin',]),
+      where('support', '==', true),
+      orderBy('name', 'asc'),
+    );
+
+    let totalDeleted = 0;
+    let documentsToDelete = [];
+
+    try {
+      // Get all documents in the collection
+      const querySnapshot = await getDocs(q);
+
+      // Create batches of document references to delete
+      for (const doc of querySnapshot.docs) {
+        documentsToDelete.push(doc.ref);
+
+        // When we reach the batch size, execute the batch delete
+        if (documentsToDelete.length === batchSize) {
+          await executeDelete(documentsToDelete);
+          totalDeleted += documentsToDelete.length;
+          documentsToDelete = [];
+        }
+      }
+
+      // Delete any remaining documents
+      if (documentsToDelete.length > 0) {
+        await executeDelete(documentsToDelete);
+        totalDeleted += documentsToDelete.length;
+      }
+
+      console.log(`Successfully deleted ${totalDeleted} documents from ${collectionPath}`);
+
+    } catch (error) {
+      console.error('Error deleting collection:', error);
+    }
+
+    setLoading(false);
+    fetchSupport(null, true);
+  }
+
+  async function executeDelete(documentRefs) {
+    const batch = writeBatch(db);
+
+    documentRefs.forEach(docRef => {
+      batch.delete(docRef);
+    });
+
+    await batch.commit();
+  }
+
+
 
   useEffect(() => {
     fetchSupport();
@@ -226,6 +287,11 @@ export default function Support() {
       <View style={styles.buttonContainer}>
         <Button title="Refresh" onPress={() => fetchSupport(null, true)} />
         <Button title="Add Support" onPress={addRandomSupport} />
+        <Button
+          title="Delete All"
+          onPress={batchDeleteCollection}
+          color="red"
+        />
       </View>
 
       <FlatList

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, StyleSheet, Button } from "react-native";
-import { collection, getDocs, addDoc, Timestamp, doc, updateDoc, deleteDoc, query, orderBy, limit, startAfter } from "firebase/firestore";
+import { collection, getDocs, addDoc, Timestamp, doc, updateDoc, deleteDoc, query, orderBy, limit, startAfter, writeBatch } from "firebase/firestore";
 
 import { db } from "@/firebaseConfig";
 
@@ -118,6 +118,62 @@ export default function Itinerary() {
     setLoading(false);
   };
 
+
+  const batchDeleteCollection = async () => {
+    const collectionPath = "itineraries"
+    const batchSize = 500;
+
+    setLoading(true);
+
+    const collectionRef = collection(db, collectionPath);
+    const q = query(collectionRef);
+  
+    let totalDeleted = 0;
+    let documentsToDelete = [];
+  
+    try {
+      // Get all documents in the collection
+      const querySnapshot = await getDocs(q);
+  
+      // Create batches of document references to delete
+      for (const doc of querySnapshot.docs) {
+        documentsToDelete.push(doc.ref);
+  
+        // When we reach the batch size, execute the batch delete
+        if (documentsToDelete.length === batchSize) {
+          await executeDelete(documentsToDelete);
+          totalDeleted += documentsToDelete.length;
+          documentsToDelete = [];
+        }
+      }
+  
+      // Delete any remaining documents
+      if (documentsToDelete.length > 0) {
+        await executeDelete(documentsToDelete);
+        totalDeleted += documentsToDelete.length;
+      }
+  
+      console.log(`Successfully deleted ${totalDeleted} documents from ${collectionPath}`);
+  
+    } catch (error) {
+      console.error('Error deleting collection:', error);
+    }
+
+    setLoading(false);
+    fetchItineraries(null, true);
+  }
+  
+  async function executeDelete(documentRefs) {
+    const batch = writeBatch(db);
+  
+    documentRefs.forEach(docRef => {
+      batch.delete(docRef);
+    });
+  
+    await batch.commit();
+  }
+  
+
   useEffect(() => {
     fetchItineraries();
   }, []);
@@ -142,7 +198,7 @@ export default function Itinerary() {
         </View>
         <Text>No itineraries found.</Text>
       </View>
-    );  
+    );
   }
 
   return (
@@ -151,6 +207,11 @@ export default function Itinerary() {
       <View style={styles.buttonContainer}>
         <Button title="Refresh" onPress={() => fetchItineraries(null, true)} />
         <Button title="Add Itinerary" onPress={addRandomItinerary} />
+        <Button
+          title="Delete All"
+          onPress={batchDeleteCollection}
+          color="red"
+        />
       </View>
 
       <FlatList

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, StyleSheet, Button } from "react-native";
 import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
-import { collection, getDocs, setDoc, getDoc, doc, updateDoc, deleteDoc, query, orderBy, limit, startAfter, where } from "firebase/firestore";
+import { collection, getDocs, setDoc, getDoc, doc, updateDoc, deleteDoc, query, orderBy, limit, startAfter, where, writeBatch } from "firebase/firestore";
 
 import { db, auth } from "@/firebaseConfig";
 
@@ -25,7 +25,7 @@ export default function Members() {
       const memberRef = collection(db, 'users');
       let q = query(
         memberRef,
-        where('role', 'not-in', ['admin', ]),
+        where('role', 'not-in', ['admin',]),
         where('support', '==', false),
         orderBy('name', 'asc'),
         limit(PAGE_SIZE)
@@ -34,7 +34,7 @@ export default function Members() {
       if (startDoc) {
         q = query(
           memberRef,
-          where('role', 'not-in', ['admin', ]),
+          where('role', 'not-in', ['admin',]),
           where('support', '==', false),
           orderBy('name', 'asc'),
           startAfter(startDoc),
@@ -161,7 +161,7 @@ export default function Members() {
     try {
       const memberDoc = doc(db, "users", id);
       await deleteDoc(memberDoc);
-      
+
       fetchMembers(null, true)
     } catch (error) {
       console.error("Error deleting member:", error);
@@ -190,6 +190,66 @@ export default function Members() {
 
   }
 
+  const batchDeleteCollection = async () => {
+    const collectionPath = "users"
+    const batchSize = 500;
+
+    setLoading(true);
+
+    const collectionRef = collection(db, collectionPath);
+    const q = query(
+      collectionRef,
+      where('role', 'not-in', ['admin',]),
+      where('support', '==', false),
+      orderBy('name', 'asc')
+    );
+
+    let totalDeleted = 0;
+    let documentsToDelete = [];
+
+    try {
+      // Get all documents in the collection
+      const querySnapshot = await getDocs(q);
+
+      // Create batches of document references to delete
+      for (const doc of querySnapshot.docs) {
+        documentsToDelete.push(doc.ref);
+
+        // When we reach the batch size, execute the batch delete
+        if (documentsToDelete.length === batchSize) {
+          await executeDelete(documentsToDelete);
+          totalDeleted += documentsToDelete.length;
+          documentsToDelete = [];
+        }
+      }
+
+      // Delete any remaining documents
+      if (documentsToDelete.length > 0) {
+        await executeDelete(documentsToDelete);
+        totalDeleted += documentsToDelete.length;
+      }
+
+      console.log(`Successfully deleted ${totalDeleted} documents from ${collectionPath}`);
+
+    } catch (error) {
+      console.error('Error deleting collection:', error);
+    }
+
+    setLoading(false);
+    fetchMembers(null, true);
+  }
+
+  async function executeDelete(documentRefs) {
+    const batch = writeBatch(db);
+
+    documentRefs.forEach(docRef => {
+      batch.delete(docRef);
+    });
+
+    await batch.commit();
+  }
+
+
   useEffect(() => {
     fetchMembers();
   }, []);
@@ -210,7 +270,7 @@ export default function Members() {
         <Text style={styles.heading}>Members</Text>
         <View style={styles.buttonContainer}>
           <Button title="Refresh" onPress={() => fetchMembers(null, true)} />
-          <Button title="Add Members" onPress={addRandomMembers} />
+          <Button title="Add Random Member" onPress={addRandomMembers} />
         </View>
         <Text>No members found.</Text>
       </View>
@@ -222,7 +282,12 @@ export default function Members() {
       <Text style={styles.heading}>Members</Text>
       <View style={styles.buttonContainer}>
         <Button title="Refresh" onPress={() => fetchMembers(null, true)} />
-        <Button title="Add Members" onPress={addRandomMembers} />
+        <Button title="Add Random Member" onPress={addRandomMembers} />
+        <Button
+          title="Delete All"
+          onPress={batchDeleteCollection}
+          color="red"
+        />
       </View>
 
       <FlatList
