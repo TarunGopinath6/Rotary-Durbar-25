@@ -317,23 +317,57 @@
 
 // export default App;
 
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  Dimensions,
-  Modal,
-  TouchableWithoutFeedback,
-} from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, Modal, TouchableWithoutFeedback } from "react-native";
+import { db } from "@/firebaseConfig";
+import { collection, getDocs, query } from "firebase/firestore";
 
 const ItineraryScreen = () => {
   const [activeTab, setActiveTab] = useState("Day 1");
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+
+  const [loading, setLoading] = useState(true);
+  const [tabNames, setTabNames] = useState([]);
+  const [dataDates, setDataDates] = useState([])
+
+  const hasRun = useRef(false)
+
+  const fetchTabs = async () => {
+    setLoading(true);
+    try {
+      if (hasRun.current === false) {
+        const itinerariesDatesRef = collection(db, 'itineraries_dates');
+        let qDatesRef = query(itinerariesDatesRef);
+        const querySnapshotDatesRef = await getDocs(qDatesRef);
+
+        const dataDatesOut = querySnapshotDatesRef.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setDataDates(dataDatesOut);
+
+        const dayList = Array.from({ length: dataDatesOut.length }, (_, index) => `Day ${index + 1}`);
+        setTabNames(dayList);
+
+        console.log(new Date(dataDatesOut[0]['date']['seconds']))       
+        console.log(dataDatesOut)                
+        hasRun.current = true;
+      }
+      else {
+        console.log('secondary runs')
+      }
+    } catch (error) {
+      console.error("Error fetching tabs:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTabs()
+  }, [activeTab])
+
 
   const renderTimeSlot = ({ item }) => (
     <View style={styles.timeSlotContainer}>
@@ -564,7 +598,7 @@ const ItineraryScreen = () => {
 
       {/* Tabs */}
       <View style={styles.tabsContainer}>
-        {["Day 1", "Day 2", "Day 3"].map((tab) => (
+        {tabNames.map((tab) => (
           <TouchableOpacity
             key={tab}
             style={[styles.tab, activeTab === tab && styles.activeTab]}
