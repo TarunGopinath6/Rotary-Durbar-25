@@ -19,7 +19,7 @@ serviceAccountKey.json
 node_modules
 /.pnp
 .pnp.js
-package.json
+package-lock.json
 yarn.lock
 
 # testing
