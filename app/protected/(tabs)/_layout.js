@@ -407,19 +407,24 @@
 // });
 
 import { Tabs, useRouter, useSegments } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState, createContext } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { auth, db } from "@/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
-import { useWindowDimensions, Platform, View, StyleSheet } from "react-native";
+import { Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "react-native";
+
+
+export const AppContext = createContext();
+
 
 const _layout = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const segments = useSegments();
+
+  const [userData, setUserData] = useState({})
+
   const getBottomPadding = () => {
     if (Platform.OS === "ios") {
       return insets.bottom > 0 ? insets.bottom : 8;
@@ -440,6 +445,10 @@ const _layout = () => {
           if (!userDoc.exists()) {
             router.replace("/");
           }
+          else {
+            setUserData({ id: userDoc.id, ...userDoc.data() })
+            console.log(userDoc.data()?.name)
+          }
         } catch (error) {
           console.error("Error fetching user data:", error);
           router.replace("/");
@@ -457,56 +466,58 @@ const _layout = () => {
   }, [router, segments]);
 
   return (
-    <Tabs
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
+    <AppContext.Provider value={{ userData, setUserData }}>
+      <Tabs
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName;
 
-          switch (route.name) {
-            case "index":
-              iconName = focused ? "layers" : "layers-outline";
-              break;
-            case "itinerary":
-              iconName = focused ? "calendar" : "calendar-outline";
-              break;
-            case "members":
-              iconName = focused ? "people" : "people-outline";
-              break;
-            case "profile":
-              iconName = focused ? "person" : "person-outline";
-              break;
-            case "support":
-              iconName = focused ? "help-circle" : "help-circle-outline";
-              break;
-            default:
-              iconName = "alert-circle-outline";
-          }
+            switch (route.name) {
+              case "index":
+                iconName = focused ? "layers" : "layers-outline";
+                break;
+              case "itinerary":
+                iconName = focused ? "calendar" : "calendar-outline";
+                break;
+              case "members":
+                iconName = focused ? "people" : "people-outline";
+                break;
+              case "profile":
+                iconName = focused ? "person" : "person-outline";
+                break;
+              case "support":
+                iconName = focused ? "help-circle" : "help-circle-outline";
+                break;
+              default:
+                iconName = "alert-circle-outline";
+            }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: "#A32638",
-        tabBarInactiveTintColor: "#A9A9A9",
-        tabBarStyle: {
-          height: Platform.select({
-            ios: 60 + getBottomPadding(),
-            android: 60 + getBottomPadding(),
-          }),
-          paddingBottom: getBottomPadding(),
-          paddingTop: 8,
-          backgroundColor: "#fff",
-          position: "absolute",
-          borderTopLeftRadius: 30,
-          borderTopRightRadius: 30,
-        },
-      })}
-    >
-      <Tabs.Screen name="itinerary" options={{ title: "Itinerary" }} />
-      <Tabs.Screen name="members" options={{ title: "Network" }} />
-      <Tabs.Screen name="index" options={{ title: "Home" }} />
-      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
-      <Tabs.Screen name="support" options={{ title: "Support" }} />
-    </Tabs>
+            return <Ionicons name={iconName} size={size} color={color} />;
+          },
+          tabBarActiveTintColor: "#A32638",
+          tabBarInactiveTintColor: "#A9A9A9",
+          tabBarStyle: {
+            height: Platform.select({
+              ios: 60 + getBottomPadding(),
+              android: 60 + getBottomPadding(),
+            }),
+            paddingBottom: getBottomPadding(),
+            paddingTop: 8,
+            backgroundColor: "#fff",
+            position: "absolute",
+            borderTopLeftRadius: 30,
+            borderTopRightRadius: 30,
+          },
+        })}
+      >
+        <Tabs.Screen name="itinerary" options={{ title: "Itinerary" }} />
+        <Tabs.Screen name="members" options={{ title: "Network" }} />
+        <Tabs.Screen name="index" options={{ title: "Home" }} />
+        <Tabs.Screen name="profile" options={{ title: "Profile" }} />
+        <Tabs.Screen name="support" options={{ title: "Support" }} />
+      </Tabs>
+    </AppContext.Provider>
   );
 };
 

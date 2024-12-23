@@ -1,149 +1,44 @@
-// import { View, Button, StyleSheet, Text } from "react-native";
-// import { router } from "expo-router";
-
-// export default function SandboxScreen() {
-//   return (
-//     <View style={styles.container}>
-//       <View style={styles.buttonStyle}>
-//         <Button
-//           title="Itinerary"
-//           onPress={() => router.push("/protected/itinerary")}
-//         />
-//         <Text style={styles.textStyle}>
-//           CRUD + Infinite Scrolling Pagination (10 records at a time) + Sort by
-//           startTime DESC
-//         </Text>
-//       </View>
-//       <View style={styles.buttonStyle}>
-//         <Button
-//           title="Members"
-//           onPress={() => router.push("/protected/members")}
-//         />
-//         <Text style={styles.textStyle}>
-//           CRUD + Infinite Scrolling Pagination (10 records at a time) + Sort by
-//           name ASC + Dynamic load (click to display more) + Filtered for
-//           non-admins and non-support users.
-//         </Text>
-//       </View>
-//       <View style={styles.buttonStyle}>
-//         <Button
-//           title="Profile"
-//           onPress={() => router.push("/protected/profile")}
-//         />
-//         <Text style={styles.textStyle}>
-//           Show all key-value data of current user
-//         </Text>
-//       </View>
-//       <View style={styles.buttonStyle}>
-//         <Button
-//           title="Support Users"
-//           onPress={() => router.push("/protected/support")}
-//         />
-//         <Text style={styles.textStyle}>
-//           CRUD + Infinite Scrolling Pagination (10 records at a time) + Sort by
-//           name ASC + Dynamic load (click to display more) + Filtered for
-//           non-admins and support users.
-//         </Text>
-//       </View>
-//       <View style={styles.buttonStyle}>
-//         <Button
-//           title="Support Users"
-//           onPress={() => router.push("/protected/signin")}
-//         />
-//         <Text style={styles.textStyle}>Temproary Sign In page</Text>
-//       </View>
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     justifyContent: "center",
-//     alignItems: "center",
-//     width: "100%",
-//   },
-//   buttonStyle: {
-//     margin: 20,
-//     width: "90%",
-//   },
-//   textStyle: {
-//     width: "100%", // Make text occupy the same width as the button
-//     textAlign: "center", // Center align the text
-//     marginTop: 10,
-//   },
-// });
-
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  FlatList,
-  StatusBar,
-  Linking,
-} from "react-native";
+import React, { useState, useEffect, useContext } from "react";
+import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, StatusBar, Linking } from "react-native";
+import { db } from "@/firebaseConfig";
+import { collection, getDocs, query } from "firebase/firestore";
 import moment from "moment";
-import { SafeAreaView } from "react-native-safe-area-context";
-// import LinearGradient from "react-native-linear-gradient";
+import { AppContext } from "./_layout";
+
 // import { LinearGradient } from 'expo-linear-gradient';
 
 
 const App = () => {
   // Sample dictionary for testing
-  const posts = [
-    {
-      id: 1,
-      text: "RI Director Elect Anirudha Roy Chowdhury delivered an enthralling speech at SARVAM 3232 District Conference",
-      image: require("../../../assets/images/rotary_logo.png"),
-      cheers: 83,
-      event: "preSETS I",
-      timestamp: new Date().setHours(new Date().getHours() - 2),
-    },
-    {
-      id: 2,
-      text: "Thank you Magical Secretaries for such a wonderful session, hope you all enjoyed it!",
-      cheers: 83,
-      event: "preSETS I",
-      timestamp: new Date().setHours(new Date().getHours() - 2),
-    },
-    {
-      id: 3,
-      text: "Click on the link to fill in your feedback for the sessions",
-      link: "https://docs.google.com/forms/",
-      cheers: 83,
-      event: "preSETS I",
-      timestamp: new Date().setDate(new Date().getDate() - 1),
-    },
-    {
-      id: 4,
-      text: "RI Director Elect Anirudha Roy Chowdhury delivered an enthralling speech at SARVAM 3232 District Conference",
-      image: require("../../../assets/images/rotary_logo.png"),
-      cheers: 83,
-      event: "preSETS I",
-      timestamp: new Date().setHours(new Date().getHours() - 2),
-    },
-    {
-      id: 5,
-      text: "Thank you Magical Secretaries for such a wonderful session, hope you all enjoyed it!",
-      cheers: 83,
-      event: "preSETS I",
-      timestamp: new Date().setHours(new Date().getHours() - 2),
-    },
-    {
-      id: 6,
-      text: "Click on the link to fill in your feedback for the sessions",
-      link: "https://docs.google.com/forms/",
-      cheers: 83,
-      event: "preSETS I",
-      timestamp: new Date().setDate(new Date().getDate() - 1),
-    },
-  ];
-
   const [activeTab, setActiveTab] = useState("All Posts");
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { userData, setUserData } = useContext(AppContext);
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    try {
+      const postRef = collection(db, 'posts');
+      let q = query(postRef);
+      const querySnapshot = await getDocs(q);
+
+      const data = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setPosts(data);
+
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, [])
 
   // Filtered posts based on active tab
   const filteredPosts = posts.filter((post) => {
@@ -188,7 +83,7 @@ const App = () => {
             source={require("../../../assets/images/mysore_palace.png")}
             style={styles.headerImage}
           />
-          <Text style={styles.headerText}>Hi, Rtn. Gopinath R!</Text>
+          <Text style={styles.headerText}>Hi, Rtn. {userData?.name ?? "NA"}!</Text>
           <Text style={styles.headerSubText}>
             Prepare to be spellbound by preSETS I
           </Text>
@@ -243,6 +138,9 @@ const App = () => {
             </TouchableOpacity>
           ))}
         </View>
+
+        {loading === true && "Loading..."}
+
         {
           filteredPosts.map((item, index) => (
             <View style={styles.postContainer} key={index}>
@@ -273,10 +171,6 @@ const App = () => {
               </View>
             </View>
           ))}
-        {/* contentContainerStyle={{
-            paddingBottom: 80, // Height of the tab navigator
-          }} */}
-
       </ScrollView>
     </>
   );
@@ -286,6 +180,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#ffffff",
+    paddingBottom: 80
   },
   header: {
     backgroundColor: "#A32638",
