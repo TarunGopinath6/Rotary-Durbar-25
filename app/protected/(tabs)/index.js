@@ -88,7 +88,9 @@ import {
 } from "react-native";
 import moment from "moment";
 import { SafeAreaView } from "react-native-safe-area-context";
-import LinearGradient from "react-native-linear-gradient";
+// import LinearGradient from "react-native-linear-gradient";
+// import { LinearGradient } from 'expo-linear-gradient';
+
 
 const App = () => {
   // Sample dictionary for testing
@@ -241,13 +243,9 @@ const App = () => {
             </TouchableOpacity>
           ))}
         </View>
-
-        {/* Posts */}
-        <FlatList
-          data={filteredPosts}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.postContainer}>
+        {
+          filteredPosts.map((item, index) => (
+            <View style={styles.postContainer} key={index}>
               <Text style={styles.postText}>{item.text}</Text>
               {item.image && (
                 <Image source={item.image} style={styles.postImage} />
@@ -274,11 +272,11 @@ const App = () => {
                 </Text>
               </View>
             </View>
-          )}
-          contentContainerStyle={{
+          ))}
+        {/* contentContainerStyle={{
             paddingBottom: 80, // Height of the tab navigator
-          }}
-        />
+          }} */}
+
       </ScrollView>
     </>
   );

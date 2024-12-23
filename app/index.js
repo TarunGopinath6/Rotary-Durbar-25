@@ -11,13 +11,14 @@ import {
   Linking,
   ActivityIndicator,
   Alert,
+  StatusBar
 } from "react-native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/firebaseConfig";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { StatusBar } from "react-native";
+// import { StatusBar } from "react-native";
 
 export default function Index() {
   const [email, setEmail] = useState("");
