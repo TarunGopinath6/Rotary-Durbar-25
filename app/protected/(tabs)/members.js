@@ -378,15 +378,73 @@ import {
   ScrollView,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import {
+  useFonts,
+  Inter_100Thin,
+  Inter_200ExtraLight,
+  Inter_300Light,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+  Inter_900Black,
+} from "@expo-google-fonts/inter";
 
 const DirectoryScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
+  let [fontsLoaded] = useFonts({
+    Inter_100Thin,
+    Inter_200ExtraLight,
+    Inter_300Light,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+    Inter_900Black,
+  });
 
   // Sample data - replace with your actual data source
   const directoryData = [
+    {
+      about_your_business:
+        "We are an IT services and staff augmentation company headquartered in US and have branches in Hyderabad and Chennai.",
+      business_address: "Chennai",
+      business_website: "www.configusa.com",
+      club_name: "Rotary Club Of Madras Chenna Patna",
+      company_name: "Config Solutions Private Limited ",
+      date_of_birth: "11/04/1974",
+      designation: "Director",
+      email: "rcantony@gmail.com",
+      email_address: "rcantony@gmail.com",
+      emergency_contact_name: "Mariaselvi",
+      emergency_contact_phone: 9962882591,
+      emergency_contact_relationship: "Spouse",
+      meal_preference: "Non-Vegetarian",
+      name: "Antony Kumar RC",
+      phone: 9840960300,
+      photograph:
+        "https://drive.google.com/open?id=1BEHpmFfmoMsr9Zsq-r51KgxFAx5NOJEw",
+      residential_address:
+        "105/57A, Secretariat Colony 2nd street, Kilpauk, Chennai 600010",
+      role: "member",
+      rotarian_since: 2023,
+      rotary_foundation_title: "Paul Harris Fellow (PHF)",
+      sex: "Male",
+      shirt_size: 42,
+      spouses_name: "Mariaselvi",
+      support: false,
+      t_shirt_size: "XL",
+      type_of_business: "Professional Services",
+      wedding_anniversary: "28/05",
+      name: "Antony Kumar RC",
+      company_sector: "IT Services",
+      business_name: "Config Solutions Private Limited",
+    },
     {
       about_your_business:
         "We are an IT services and staff augmentation company headquartered in US and have branches in Hyderabad and Chennai.",
@@ -599,6 +657,22 @@ const DirectoryScreen = () => {
       </View>
     );
 
+    const formatClubName = (name) => {
+      const words = name.split(" ");
+      const firstLine = words.slice(0, 3).join(" ");
+      const secondLine = words.slice(3).join(" ");
+      return { firstLine, secondLine };
+    };
+
+    const handleWebsite = (url) => {
+      if (!url.startsWith("http")) {
+        url = "https://" + url;
+      }
+      Linking.openURL(url);
+    };
+
+    const clubName = formatClubName(selectedMember.club_name);
+
     return (
       <Modal
         animationType="fade"
@@ -606,118 +680,238 @@ const DirectoryScreen = () => {
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.modalContent}>
-                <ScrollView
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={styles.scrollContent}
-                >
-                  <Image
-                    source={{ uri: selectedMember.photograph }}
-                    style={styles.modalImage}
-                    defaultSource={require("../../../assets/images/rotary_logo.png")}
-                  />
-                  <Text style={styles.modalName}>{selectedMember.name}</Text>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Ionicons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}
+              bounces={true}
+            >
+              <Image
+                source={{ uri: selectedMember.photograph }}
+                style={styles.modalImage}
+                defaultSource={require("../../../assets/images/rotary_logo.png")}
+              />
+              <Text style={styles.modalName}>{selectedMember.name}</Text>
+              <View style={styles.clubNameContainer}>
+                <Text style={styles.modalClubName}>{clubName.firstLine}</Text>
+                {clubName.secondLine && (
                   <Text style={styles.modalClubName}>
-                    {selectedMember.club_name}
+                    {clubName.secondLine}
                   </Text>
-                  <View style={styles.modalSeparator} />
-
-                  <View style={styles.infoSection}>
-                    {selectedMember.spouses_name && (
-                      <InfoRow
-                        icon="person"
-                        text={`Spouse: ${selectedMember.spouses_name}`}
-                      />
-                    )}
-                    <InfoRow
-                      icon="time"
-                      text={`Rotarian Since: ${selectedMember.rotarian_since}`}
-                    />
-                    <InfoRow
-                      icon="business"
-                      text={`Business: ${selectedMember.company_name}`}
-                    />
-                    <InfoRow
-                      icon="briefcase"
-                      text={`Type: ${selectedMember.type_of_business}`}
-                    />
-                    <InfoRow
-                      icon="information-circle"
-                      text={`About: ${selectedMember.about_your_business}`}
-                    />
-                    {selectedMember.business_website && (
-                      <InfoRow
-                        icon="globe"
-                        text={`Website: ${selectedMember.business_website}`}
-                      />
-                    )}
-                  </View>
-
-                  <TouchableOpacity
-                    style={styles.addressButton}
-                    onPress={() => handleMaps(selectedMember.business_address)}
-                  >
-                    <Text style={styles.addressButtonText}>
-                      View Business Location
-                    </Text>
-                  </TouchableOpacity>
-
-                  <View style={styles.infoSection}>
-                    <InfoRow
-                      icon="calendar"
-                      text={`Birth Date: ${formatDate(
-                        selectedMember.date_of_birth
-                      )}`}
-                    />
-                    {selectedMember.wedding_anniversary && (
-                      <InfoRow
-                        icon="heart"
-                        text={`Anniversary: ${selectedMember.wedding_anniversary}`}
-                      />
-                    )}
-                    <InfoRow
-                      icon="call"
-                      text={`Phone: ${selectedMember.phone}`}
-                    />
-                    <InfoRow
-                      icon="mail"
-                      text={`Email: ${selectedMember.email}`}
-                    />
-                  </View>
-
-                  <View style={styles.actionButtons}>
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.callButton]}
-                      onPress={() => handleCall(selectedMember.phone)}
-                    >
-                      <Text style={styles.actionButtonText}>Call</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.emailButton]}
-                      onPress={() => handleEmail(selectedMember.email)}
-                    >
-                      <Text style={styles.actionButtonText}>Email</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.actionButtons}>
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.emergencyButton]}
-                      onPress={() =>
-                        handleCall(selectedMember.emergency_contact_phone)
-                      }
-                    >
-                      <Text style={styles.actionButtonText}>Emergency</Text>
-                    </TouchableOpacity>
-                  </View>
-                </ScrollView>
+                )}
               </View>
-            </TouchableWithoutFeedback>
+
+              <View style={styles.modalSeparator} />
+
+              <View style={styles.actionButtonsTop}>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => handleCall(selectedMember.phone)}
+                >
+                  <Ionicons name="call" size={24} color="#A32638" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => handleEmail(selectedMember.email)}
+                >
+                  <Ionicons name="mail" size={24} color="#A32638" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => handleMaps(selectedMember.business_address)}
+                >
+                  <Ionicons name="location" size={24} color="#A32638" />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={styles.emergencyButton}
+                onPress={() =>
+                  handleCall(selectedMember.emergency_contact_phone)
+                }
+              >
+                <Text style={styles.emergencyText}>Emergency</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.sectionTitle}>Rotary</Text>
+              {/* Rotary Information */}
+              <View style={styles.infoSection}>
+                <View style={styles.infoRow}>
+                  <Image
+                    source={require("../../../assets/images/cheer_icon.png")}
+                    style={[styles.rotaryIcon, { tintColor: "#A32638" }]}
+                  />
+                  <Text style={styles.infoText}>
+                    {selectedMember.rotarian_since}
+                  </Text>
+                </View>
+                {selectedMember.rotary_foundation_title &&
+                  selectedMember.rotary_foundation_title !== "NA" && (
+                    <View style={styles.infoRow}>
+                      <Ionicons name="ribbon" size={20} color="#A32638" />
+                      <Text style={styles.infoText}>
+                        {selectedMember.rotary_foundation_title}
+                      </Text>
+                    </View>
+                  )}
+              </View>
+
+              <View style={styles.sectionSeparator} />
+
+              {/* Business Information */}
+              <Text style={styles.sectionTitle}>Business</Text>
+              <View style={styles.infoSection}>
+                <View style={styles.infoRow}>
+                  <Ionicons name="business" size={20} color="#A32638" />
+                  <Text
+                    style={[
+                      styles.infoText,
+                      { fontFamily: "Inter_600SemiBold" },
+                    ]}
+                  >
+                    {selectedMember.business_name}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Ionicons name="person-circle" size={20} color="#fff" />
+                  <Text
+                    style={[
+                      styles.infoText,
+                      { fontFamily: "Inter_600SemiBold" },
+                    ]}
+                  >
+                    {selectedMember.designation}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Ionicons name="briefcase" size={20} color="#fff" />
+                  <Text style={styles.infoText}>
+                    {selectedMember.type_of_business}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Ionicons name="layers" size={20} color="#fff" />
+                  <Text style={styles.infoText}>
+                    {selectedMember.company_sector}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Ionicons name="information-circle" size={20} color="#fff" />
+                  <Text style={styles.infoText}>
+                    {selectedMember.about_your_business}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Ionicons name="location" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>
+                    {selectedMember.business_address}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.infoRow}
+                  onPress={() => handleWebsite(selectedMember.business_website)}
+                >
+                  <Ionicons name="globe" size={20} color="#A32638" />
+                  <Text style={[styles.infoText, styles.linkText]}>
+                    {selectedMember.business_website}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.sectionSeparator} />
+
+              {/* Personal Information */}
+              <Text style={styles.sectionTitle}>Personal</Text>
+              <View style={styles.infoSection}>
+                <View style={styles.infoRow}>
+                  <Ionicons name="person" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>{selectedMember.sex}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Ionicons name="heart" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>
+                    {selectedMember.spouses_name}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Ionicons name="gift" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>
+                    {selectedMember.wedding_anniversary}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Ionicons name="calendar" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>
+                    {/* {selectedMember.date_of_birth} */}
+                    11/04/1974
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Ionicons name="home" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>
+                    {selectedMember.residential_address}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.sectionSeparator} />
+
+              <Text style={styles.sectionTitle}>Emergency Contact</Text>
+              <View style={styles.infoSection}>
+                <View style={styles.infoRow}>
+                  <Ionicons name="alert-circle" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>
+                    {selectedMember.emergency_contact_name}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Ionicons name="people" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>
+                    {selectedMember.emergency_contact_relationship}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Ionicons name="call" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>
+                    {selectedMember.emergency_contact_phone}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.sectionSeparator} />
+
+              <Text style={styles.sectionTitle}>Preferences</Text>
+              <View style={styles.infoSection}>
+                <View style={styles.infoRow}>
+                  <Ionicons name="shirt" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>
+                    {selectedMember.shirt_size}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Ionicons name="shirt-outline" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>
+                    {selectedMember.t_shirt_size}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Ionicons name="restaurant" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>
+                    {selectedMember.meal_preference}
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
           </View>
-        </TouchableWithoutFeedback>
+        </View>
       </Modal>
     );
   };
@@ -783,6 +977,30 @@ const styles = StyleSheet.create({
   infoTextWithIcon: {
     flex: 1,
   },
+  // Styles to add:
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: "Inter_600SemiBold",
+    color: "#A32638",
+    marginBottom: 10,
+    marginTop: 5,
+    paddingHorizontal: 10,
+  },
+  sectionSeparator: {
+    height: 20, // Increased from 15 to accommodate titles
+  },
+  infoSection: {
+    paddingHorizontal: 5, // Adjusted padding to align with section title
+  },
+  rotaryIcon: {
+    width: 25,
+    height: 25,
+    marginRight: 10,
+  },
+  linkText: {
+    color: "#A32638",
+    textDecorationLine: "underline",
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
@@ -793,6 +1011,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 30,
     padding: 20,
+    paddingVertical: 10,
     width: "85%",
     maxHeight: "80%",
     elevation: 8,
@@ -806,31 +1025,51 @@ const styles = StyleSheet.create({
   },
   modalName: {
     fontSize: 22,
-    fontFamily: "Inter-Bold",
+    fontFamily: "Inter_700Bold",
     textAlign: "center",
     marginBottom: 5,
+  },
+  clubNameContainer: {
+    alignItems: "center",
+    marginBottom: 15,
   },
   modalClubName: {
     fontSize: 16,
     color: "#17458F",
-    fontFamily: "Inter-Medium",
+    fontFamily: "Inter_500Medium",
     textAlign: "center",
-    marginBottom: 15,
   },
   modalSeparator: {
     height: 1,
     backgroundColor: "#17458F",
-    width: "100%",
+    width: "25%",
+    alignSelf: "center",
     marginBottom: 15,
   },
-  infoSection: {
+  actionButtonsTop: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
     marginBottom: 15,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 3,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    paddingHorizontal: 10,
   },
   infoText: {
-    fontSize: 14,
-    fontFamily: "Inter-Regular",
-    marginBottom: 8,
-    color: "#333",
+    fontSize: 16,
+    marginLeft: 10,
+    flex: 1,
   },
   addressButton: {
     backgroundColor: "#17458F",
@@ -841,7 +1080,7 @@ const styles = StyleSheet.create({
   addressButtonText: {
     color: "#fff",
     textAlign: "center",
-    fontFamily: "Inter-Medium",
+    fontFamily: "Inter_500Medium",
   },
   actionButtons: {
     flexDirection: "row",
@@ -861,12 +1100,25 @@ const styles = StyleSheet.create({
     backgroundColor: "#2196F3",
   },
   emergencyButton: {
-    backgroundColor: "#f44336",
+    width: "100%",
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 0.5,
+    borderColor: "#A32638",
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  emergencyText: {
+    color: "#A32638",
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
   },
   actionButtonText: {
     color: "#fff",
     textAlign: "center",
-    fontFamily: "Inter-Medium",
+    fontFamily: "Inter_500Medium",
     fontSize: 13,
   },
   container: {
@@ -896,7 +1148,7 @@ const styles = StyleSheet.create({
     padding: 10,
     paddingHorizontal: 20,
     color: "#FFBD1B",
-    fontFamily: "Inter-Medium",
+    fontFamily: "Inter_500Medium",
   },
   searchContainer: {
     flexDirection: "row",
@@ -919,7 +1171,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderWidth: 1,
     borderColor: "#ddd",
-    fontFamily: "Inter-Regular",
+    fontFamily: "Inter_400Regular",
   },
   filterButton: {
     backgroundColor: "#A32638",
@@ -929,7 +1181,7 @@ const styles = StyleSheet.create({
   },
   filterButtonText: {
     color: "#fff",
-    fontFamily: "Inter-Medium",
+    fontFamily: "Inter_500Medium",
   },
   grid: {
     flex: 1,
@@ -966,7 +1218,7 @@ const styles = StyleSheet.create({
   clubName: {
     fontSize: 13,
     color: "#17458F",
-    fontFamily: "Inter-Medium",
+    fontFamily: "Inter_500Medium",
     textAlign: "center",
     marginBottom: 10,
   },
@@ -978,7 +1230,7 @@ const styles = StyleSheet.create({
   },
   companyName: {
     fontSize: 12,
-    fontFamily: "Inter-Regular",
+    fontFamily: "Inter_400Regular",
     color: "#666",
     textAlign: "left",
     marginBottom: 5,
@@ -986,7 +1238,7 @@ const styles = StyleSheet.create({
   businessType: {
     fontSize: 12,
     color: "#666",
-    fontFamily: "Inter-Regular",
+    fontFamily: "Inter_400Regular",
     textAlign: "left",
   },
 });

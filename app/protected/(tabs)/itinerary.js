@@ -204,7 +204,7 @@
 //     padding: 10,
 //     paddingHorizontal: 20,
 //     color: "#FFBD1B",
-//     fontFamily: "Inter-Medium",
+//     fontFamily: "Inter_500Medium",
 //     backgroundColor: "rgba(163, 38, 56, 0.3)",
 //   },
 //   headerSubText: {
@@ -213,14 +213,14 @@
 //     color: "#FFBD1B",
 //     textAlign: "center",
 //     backgroundColor: "rgba(163, 38, 56, 0.3)",
-//     fontFamily: "Inter-Medium",
+//     fontFamily: "Inter_500Medium",
 //   },
 //   headerDate: {
 //     fontSize: 14,
 //     padding: 3,
 //     color: "#FFBD1B",
 //     textAlign: "center",
-//     fontFamily: "Inter-Medium",
+//     fontFamily: "Inter_500Medium",
 //     backgroundColor: "rgba(163, 38, 56, 0.3)",
 //   },
 //   logosContainer: {
@@ -253,7 +253,7 @@
 //   },
 //   tabText: {
 //     fontSize: 14,
-//     fontFamily: "Inter-Regular",
+//     fontFamily: "Inter_400Regular",
 //   },
 //   activeTabText: {
 //     color: "#A32638",
@@ -318,9 +318,30 @@
 // export default App;
 
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, Modal, TouchableWithoutFeedback } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  Modal,
+  TouchableWithoutFeedback,
+} from "react-native";
 import { db } from "@/firebaseConfig";
 import { collection, getDocs, query } from "firebase/firestore";
+import {
+  useFonts,
+  Inter_100Thin,
+  Inter_200ExtraLight,
+  Inter_300Light,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+  Inter_900Black,
+} from "@expo-google-fonts/inter";
 
 const ItineraryScreen = () => {
   const [activeTab, setActiveTab] = useState("Day 1");
@@ -329,15 +350,27 @@ const ItineraryScreen = () => {
 
   const [loading, setLoading] = useState(true);
   const [tabNames, setTabNames] = useState([]);
-  const [dataDates, setDataDates] = useState([])
+  const [dataDates, setDataDates] = useState([]);
 
-  const hasRun = useRef(false)
+  const hasRun = useRef(false);
+
+  let [fontsLoaded] = useFonts({
+    Inter_100Thin,
+    Inter_200ExtraLight,
+    Inter_300Light,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+    Inter_900Black,
+  });
 
   const fetchTabs = async () => {
     setLoading(true);
     try {
       if (hasRun.current === false) {
-        const itinerariesDatesRef = collection(db, 'itineraries_dates');
+        const itinerariesDatesRef = collection(db, "itineraries_dates");
         let qDatesRef = query(itinerariesDatesRef);
         const querySnapshotDatesRef = await getDocs(qDatesRef);
 
@@ -347,15 +380,17 @@ const ItineraryScreen = () => {
         }));
         setDataDates(dataDatesOut);
 
-        const dayList = Array.from({ length: dataDatesOut.length }, (_, index) => `Day ${index + 1}`);
+        const dayList = Array.from(
+          { length: dataDatesOut.length },
+          (_, index) => `Day ${index + 1}`
+        );
         setTabNames(dayList);
 
-        console.log(new Date(dataDatesOut[0]['date']['seconds']))       
-        console.log(dataDatesOut)                
+        console.log(new Date(dataDatesOut[0]["date"]["seconds"]));
+        console.log(dataDatesOut);
         hasRun.current = true;
-      }
-      else {
-        console.log('secondary runs')
+      } else {
+        console.log("secondary runs");
       }
     } catch (error) {
       console.error("Error fetching tabs:", error);
@@ -365,9 +400,8 @@ const ItineraryScreen = () => {
   };
 
   useEffect(() => {
-    fetchTabs()
-  }, [activeTab])
-
+    fetchTabs();
+  }, [activeTab]);
 
   const renderTimeSlot = ({ item }) => (
     <View style={styles.timeSlotContainer}>
@@ -661,12 +695,12 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 26,
     color: "#FFBD1B",
-    fontFamily: "Inter-Medium",
+    fontFamily: "Inter_500Medium",
   },
   headerSubText: {
     fontSize: 16,
     color: "#FFBD1B",
-    fontFamily: "Inter-Medium",
+    fontFamily: "Inter_500Medium",
   },
   tabsContainer: {
     flexDirection: "row",
@@ -692,7 +726,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     color: "#A32638",
-    fontFamily: "Inter-Medium",
+    fontFamily: "Inter_500Medium",
   },
   activeTabText: {
     color: "#fff",
@@ -713,7 +747,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     color: "#A32638",
-    fontFamily: "Inter-Bold",
+    fontFamily: "Inter_700Bold",
     paddingHorizontal: 10,
   },
   sectionLine: {
@@ -727,7 +761,7 @@ const styles = StyleSheet.create({
   timestamp: {
     fontSize: 14,
     color: "#A32638",
-    fontFamily: "Inter-Medium",
+    fontFamily: "Inter_500Medium",
     marginBottom: 7,
   },
   eventCard: {
@@ -799,7 +833,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontFamily: "Inter-Bold",
+    fontFamily: "Inter_700Bold",
     textAlign: "center",
     marginBottom: 10,
   },
@@ -812,18 +846,18 @@ const styles = StyleSheet.create({
   modalTime: {
     fontSize: 14,
     color: "#666",
-    fontFamily: "Inter-Medium",
+    fontFamily: "Inter_500Medium",
   },
   modalVenue: {
     fontSize: 16,
     color: "#A32638",
-    fontFamily: "Inter-Medium",
+    fontFamily: "Inter_500Medium",
     marginBottom: 15,
   },
   modalDescription: {
     fontSize: 14,
     color: "#333",
-    fontFamily: "Inter-Regular",
+    fontFamily: "Inter_400Regular",
     textAlign: "justify",
     lineHeight: 20,
   },

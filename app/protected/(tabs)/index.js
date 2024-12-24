@@ -1,12 +1,32 @@
 import React, { useState, useEffect, useContext } from "react";
-import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, StatusBar, Linking } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  StatusBar,
+  Linking,
+} from "react-native";
 import { db } from "@/firebaseConfig";
 import { collection, getDocs, query } from "firebase/firestore";
 import moment from "moment";
 import { AppContext } from "./_layout";
+import {
+  useFonts,
+  Inter_100Thin,
+  Inter_200ExtraLight,
+  Inter_300Light,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+  Inter_900Black,
+} from "@expo-google-fonts/inter";
 
 // import { LinearGradient } from 'expo-linear-gradient';
-
 
 const App = () => {
   // Sample dictionary for testing
@@ -14,11 +34,22 @@ const App = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const { userData, setUserData } = useContext(AppContext);
+  let [fontsLoaded] = useFonts({
+    Inter_100Thin,
+    Inter_200ExtraLight,
+    Inter_300Light,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+    Inter_900Black,
+  });
 
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      const postRef = collection(db, 'posts');
+      const postRef = collection(db, "posts");
       let q = query(postRef);
       const querySnapshot = await getDocs(q);
 
@@ -28,7 +59,6 @@ const App = () => {
       }));
 
       setPosts(data);
-
     } catch (error) {
       console.error("Error fetching posts:", error);
     } finally {
@@ -38,7 +68,7 @@ const App = () => {
 
   useEffect(() => {
     fetchPosts();
-  }, [])
+  }, []);
 
   // Filtered posts based on active tab
   const filteredPosts = posts.filter((post) => {
@@ -83,7 +113,9 @@ const App = () => {
             source={require("../../../assets/images/mysore_palace.png")}
             style={styles.headerImage}
           />
-          <Text style={styles.headerText}>Hi, Rtn. {userData?.name ?? "NA"}!</Text>
+          <Text style={styles.headerText}>
+            Hi, Rtn. {userData?.name ?? "NA"}!
+          </Text>
           <Text style={styles.headerSubText}>
             Prepare to be spellbound by preSETS I
           </Text>
@@ -141,36 +173,38 @@ const App = () => {
 
         {loading === true && "Loading..."}
 
-        {
-          filteredPosts.map((item, index) => (
-            <View style={styles.postContainer} key={index}>
-              <Text style={styles.postText}>{item.text}</Text>
-              {item.image && (
-                <Image source={item.image} style={styles.postImage} />
-              )}
-              {item.link && (
-                <Text
-                  style={styles.postLink}
-                  onPress={() => Linking.openURL(item.link)}
-                >
-                  {item.link}
-                </Text>
-              )}
-              <View style={styles.postFooter}>
-                <View style={styles.cheersContainer}>
-                  <Image
-                    source={require("../../../assets/images/cheer_icon.png")}
-                    style={styles.cheerIcon}
-                  />
-                  <Text style={styles.cheersText}>{item.cheers} cheers</Text>
-                </View>
-                <Text style={styles.eventText}>{item.event}</Text>
-                <Text style={styles.timestamp}>
-                  {formatTimestamp(item.timestamp)}
-                </Text>
+        {filteredPosts.map((item, index) => (
+          <View style={styles.postContainer} key={index}>
+            <Text style={styles.postText}>{item.text}</Text>
+            {item.image && (
+              <Image source={item.image} style={styles.postImage} />
+            )}
+            {item.link && (
+              <Text
+                style={styles.postLink}
+                onPress={() => Linking.openURL(item.link)}
+              >
+                {item.link}
+              </Text>
+            )}
+            <View style={styles.postFooter}>
+              <View style={styles.cheersContainer}>
+                <Image
+                  source={require("../../../assets/images/cheer_icon.png")}
+                  style={styles.cheerIcon}
+                />
+                <Text style={styles.cheersText}>{item.cheers} cheers</Text>
               </View>
+              <Text style={styles.eventText}>{item.event}</Text>
+              <Text style={styles.timestamp}>
+                {formatTimestamp(item.timestamp)}
+              </Text>
             </View>
-          ))}
+          </View>
+        ))}
+        <View
+          style={{ width: "100%", height: 100, backgroundColor: "#fff" }}
+        ></View>
       </ScrollView>
     </>
   );
@@ -179,8 +213,8 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
-    paddingBottom: 80
+    backgroundColor: "#fff",
+    paddingBottom: 100,
   },
   header: {
     backgroundColor: "#A32638",
@@ -205,7 +239,7 @@ const styles = StyleSheet.create({
     padding: 10,
     paddingHorizontal: 20,
     color: "#FFBD1B",
-    fontFamily: "Inter-Bold",
+    fontFamily: "Inter_700Bold",
   },
   headerSubText: {
     fontSize: 16,
@@ -213,14 +247,14 @@ const styles = StyleSheet.create({
     color: "#FFBD1B",
     textAlign: "center",
     backgroundColor: "rgba(163, 38, 56, 0.3)",
-    fontFamily: "Inter-Medium",
+    fontFamily: "Inter_500Medium",
   },
   headerDate: {
     fontSize: 14,
     padding: 3,
     color: "#FFBD1B",
     textAlign: "center",
-    fontFamily: "Inter-Medium",
+    fontFamily: "Inter_500Medium",
     backgroundColor: "rgba(163, 38, 56, 0.3)",
   },
   logosContainer: {
@@ -241,7 +275,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 17,
     color: "#17458F",
-    fontFamily: "Inter-Bold",
+    fontFamily: "Inter_700Bold",
   },
   drumContainer: {
     backgroundColor: "#FFFFF0",
@@ -308,7 +342,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 14,
-    fontFamily: "Inter-Regular",
+    fontFamily: "Inter_400Regular",
   },
   activeTabText: {
     color: "#A32638",
