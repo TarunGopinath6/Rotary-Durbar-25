@@ -370,12 +370,11 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
-  Dimensions,
   Modal,
-  TouchableWithoutFeedback,
   Linking,
   Platform,
   ScrollView,
+  ActivityIndicator 
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import {
@@ -390,12 +389,26 @@ import {
   Inter_800ExtraBold,
   Inter_900Black,
 } from "@expo-google-fonts/inter";
+import { collection, getDocs, query, orderBy, limit, startAfter, where, or, and } from "firebase/firestore";
+import { db } from "@/firebaseConfig";
+import { createClient } from '@supabase/supabase-js';
+
+
+const supabase = createClient(process.env.EXPO_PUBLIC_SUPABASE_URL, process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
 const DirectoryScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
+
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [offsetDoc, setOffsetDoc] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+
+  const PAGE_SIZE = 16;
+
   let [fontsLoaded] = useFonts({
     Inter_100Thin,
     Inter_200ExtraLight,
@@ -407,6 +420,63 @@ const DirectoryScreen = () => {
     Inter_800ExtraBold,
     Inter_900Black,
   });
+
+
+  const fetchMembers = async (offset = 0, queryText = "") => {
+    let query = supabase
+      .from("members")
+      .select("*")
+      .order("name", { ascending: true }) // Adjust the column for sorting as needed
+      .range(offset, offset + PAGE_SIZE - 1); ;
+
+    if (queryText) {
+      query = query.or(
+        `name.ilike.%${queryText}%,company_name.ilike.%${queryText}%,club_name.ilike.%${queryText}%`
+      );
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Error fetching members:", error);
+      return [];
+    }
+    return data;
+  };
+
+  const loadMembers = async (reset = false, queryText = "") => {
+    if (loading) return; // Prevent multiple calls
+    setLoading(true);
+
+    console.log('searching', queryText, offsetDoc)
+    let response = null;
+
+    if (reset) {
+      response = await fetchMembers(0, queryText);
+      setMembers(response);
+      setOffsetDoc(response.length);
+    } else {
+      response = await fetchMembers(offsetDoc, queryText);
+      setMembers((prev) => [...prev, ...response]);
+      setOffsetDoc(offsetDoc + response.length);
+    }
+
+    if (response.length < 10) {
+      setHasMore(false); // No more data if fewer than limit records are returned
+    }
+
+    setLoading(false)
+  };
+
+  useEffect(() => {
+    loadMembers(true);
+  }, []);
+
+  useEffect(() => {
+    // handleSearch(searchQuery);
+    loadMembers(true, searchQuery);
+  }, [searchQuery]);
+
 
   // Sample data - replace with your actual data source
   const directoryData = [
@@ -606,9 +676,6 @@ const DirectoryScreen = () => {
     });
   };
 
-  useEffect(() => {
-    handleSearch(searchQuery);
-  }, [searchQuery]);
 
   const handleSearch = (query) => {
     const lowercaseQuery = query.toLowerCase();
@@ -630,9 +697,9 @@ const DirectoryScreen = () => {
       }}
     >
       <Image
-        // source={{ uri: item.photograph }}
+        source={{ uri: item.photograph }}
         style={styles.profileImage}
-        source={require("../../../assets/images/rotary_logo.png")}
+      //source={require("../../../assets/images/rotary_logo.png")}
       />
       <Text style={styles.name}>{item.name}</Text>
       <Text style={styles.clubName}>{item.club_name}</Text>
@@ -947,14 +1014,21 @@ const DirectoryScreen = () => {
 
       {/* Directory Grid */}
       <FlatList
-        data={searchQuery ? filteredData : directoryData}
+        data={members}
         renderItem={renderDirectoryItem}
-        keyExtractor={(item) => item.name}
+        keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.gridRow}
         showsVerticalScrollIndicator={false}
         style={styles.grid}
         nestedScrollEnabled
+        onEndReached={() => {
+          if (hasMore) loadMembers();
+        }}
+        onEndReachedThreshold={0.5} 
+        ListFooterComponent={() =>
+          loading ? <ActivityIndicator size="small" color="#0000ff" /> : null
+        }
       />
     </View>
   );

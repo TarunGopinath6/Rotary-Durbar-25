@@ -63,8 +63,7 @@ export default function Index() {
       clearTimeout(timeout); // Clear timeout if request completes in time
       const userRef = doc(db, "users", userCredential.user.uid);
       const userDoc = await getDoc(userRef);
-
-      if (userDoc.exists()) {
+      if (userDoc.exists() === true) {
         router.push("/protected");
       } else {
         Alert.alert("Error", "User is inactive or disabled.");
