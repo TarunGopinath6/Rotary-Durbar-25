@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   StatusBar,
   Linking,
+  Alert,
 } from "react-native";
 import moment from "moment";
 import { AppContext } from "./_layout";
@@ -24,6 +25,7 @@ import {
   Inter_900Black,
 } from "@expo-google-fonts/inter";
 import supabase from '@/supabase.js'
+import { Button } from "react-native-web";
 
 // import { LinearGradient } from 'expo-linear-gradient';
 
@@ -34,6 +36,8 @@ const App = () => {
   const [notifs, setNotifs] = useState([]);
   const [loading, setLoading] = useState(true);
   const { userData, setUserData } = useContext(AppContext);
+  const [refresh, setRefresh] = useState(null)
+
   let [fontsLoaded] = useFonts({
     Inter_100Thin,
     Inter_200ExtraLight,
@@ -49,11 +53,16 @@ const App = () => {
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      const { data: postData, errorPosts } = await supabase.from('posts').select('*')
+      //const { data: postData, errorPosts } = await supabase.from('posts').select('*')
+
+      const { data: postData, error: errorPosts } = await supabase
+        .rpc('fetch_posts_with_likes_and_user_status', { user_id: `${userData.id}` });
       if (errorPosts) {
         console.error('Error fetching posts:', errorPosts);
         return;
       }
+
+      console.log(postData)
       setPosts(postData);
 
       const { data: notifsData, errorNotifs } = await supabase.from('notifs').select('*')
@@ -69,9 +78,47 @@ const App = () => {
     }
   };
 
+  const likePost = async (userId, postId) => {
+    // First, check if the user has already liked this post
+    const { data, error } = await supabase
+      .from('likes')
+      .insert([
+        {
+          user_id: userId,
+          post_id: postId,
+        }
+      ])
+    //.onConflict(['user_id', 'post_id']); // Prevent duplicates by user_id and post_id
+
+    if (error) {
+      console.error('Error liking post:', error);
+    } else {
+      console.log('Post liked successfully:', data);
+      alert("Post liked successfully")
+      Alert.alert("Post liked successfully")
+      setRefresh(new Date())
+    }
+  };
+
+  const unlikePost = async (userId, postId) => {
+    const { data, error } = await supabase
+      .from('likes')
+      .delete()
+      .match({ user_id: userId, post_id: postId });
+
+    if (error) {
+      console.error('Error unliking post:', error);
+    } else {
+      console.log('Post unliked successfully:', data);
+      alert("Post unliked successfully")
+      Alert.alert("Post unliked successfully")
+      setRefresh(new Date())
+    }
+  };
+
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [refresh]);
 
   // Filtered posts based on active tab
   const filteredPosts = posts.filter((post) => {
@@ -81,13 +128,15 @@ const App = () => {
   });
 
   const formatTimestamp = (timestamp) => {
+    // console.log(timestamp)
     const now = moment();
     const postTime = moment(timestamp);
+    // console.log(now.diff(postTime, "days"))
 
     if (now.isSame(postTime, "day")) {
       const diff = now.diff(postTime, "hours");
       return `${diff} hours ago`;
-    } else if (now.subtract(1, "days").isSame(postTime, "day")) {
+    } else if (now.diff(postTime, "days") === 1) {
       return "Yesterday";
     } else {
       const diff = now.diff(postTime, "days");
@@ -110,7 +159,7 @@ const App = () => {
             style={styles.headerImage}
           />
           <Text style={styles.headerText}>
-            Hi, Rtn. {userData?.name ?? "NA"}!
+            Hi, {userData?.name ?? "NA"}!
           </Text>
           <Text style={styles.headerSubText}>
             Prepare to be spellbound by preSETS I
@@ -189,11 +238,15 @@ const App = () => {
                   source={require("../../../assets/images/cheer_icon.png")}
                   style={styles.cheerIcon}
                 />
-                <Text style={styles.cheersText}>{item.cheers} cheers</Text>
+                <Text style={styles.cheersText}>{item.likes_count} cheers</Text>
+                <Button title="Like" onPress={() => likePost(userData.id, item.post_id)} />
+                <Button title="Remove Like" onPress={() => unlikePost(userData.id, item.post_id)} />
+                {item.user_has_liked === true && "LIKED"}
+                <Text>{item.post_id}</Text>
               </View>
               <Text style={styles.eventText}>{item.event}</Text>
               <Text style={styles.timestamp}>
-                {formatTimestamp(item.timestamp)}
+                {formatTimestamp(item.timedata)}
               </Text>
             </View>
           </View>

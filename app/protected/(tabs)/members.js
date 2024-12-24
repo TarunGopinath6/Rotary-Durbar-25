@@ -389,12 +389,8 @@ import {
   Inter_800ExtraBold,
   Inter_900Black,
 } from "@expo-google-fonts/inter";
-import { collection, getDocs, query, orderBy, limit, startAfter, where, or, and } from "firebase/firestore";
-import { db } from "@/firebaseConfig";
-import { createClient } from '@supabase/supabase-js';
+import supabase from "@/supabase.js"
 
-
-const supabase = createClient(process.env.EXPO_PUBLIC_SUPABASE_URL, process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
 const DirectoryScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
