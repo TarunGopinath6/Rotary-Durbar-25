@@ -327,9 +327,8 @@ import {
   StyleSheet,
   Modal,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
-import { db } from "@/firebaseConfig";
-import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
 import moment from 'moment';
 import {
   useFonts,
@@ -343,6 +342,8 @@ import {
   Inter_800ExtraBold,
   Inter_900Black,
 } from "@expo-google-fonts/inter";
+import supabase from '@/supabase.js'
+
 
 const ItineraryScreen = () => {
   const [activeTab, setActiveTab] = useState("Day 1");
@@ -369,51 +370,61 @@ const ItineraryScreen = () => {
   });
 
   const fetchData = async (dataDatesList, tabIndex) => {
-    const itinerariesRef = collection(db, "itineraries");
-    let startDateFilter = dataDatesList[tabIndex]['date'].toDate(); // Convert Firestore Timestamp to Date
+    let startDateFilter = new Date(dataDatesList[tabIndex]); // Convert Firestore Timestamp to Date
     let endDateFilter = new Date(startDateFilter.getTime() + 24 * 60 * 60 * 1000);
-    let qRef = query(
-      itinerariesRef,
-      orderBy('startTime', 'asc'),
-      where("startTime", ">=", startDateFilter),
-      where("startTime", "<=", endDateFilter)
-    );
-    const querySnapshotRef = await getDocs(qRef);
-    let finalData = [
-      { title: 'Morning', events: [] },
-      { title: 'Afternoon', events: [] }
-    ];
-    querySnapshotRef.forEach((doc) => {
-      let data = doc.data();
 
-      // Convert Firestore Timestamp to Date
-      const startTime = data.startTime.toDate(); // Assuming startTime is Firestore Timestamp
-      const endTime = data.endTime.toDate(); // Assuming endTime is Firestore Timestamp
+    try {
+      const { data: itineraries, error } = await supabase
+        .from('itineraries')
+        .select('*')
+        .gte('startTime', startDateFilter.toISOString())  // Filter events that start after startDateFilter
+        .lte('startTime', endDateFilter.toISOString())   // Filter events that start before endDateFilter
+        .order('startTime', { ascending: true });
 
-      // Format time strings to local time (e.g., "12:30 PM")
-      const formattedStartTime = moment(startTime).format('hh:mm A');
-      const formattedEndTime = moment(endTime).format('hh:mm A');
+      if (error) throw error;
 
-      // Determine whether the event is morning or afternoon
-      if (moment(startTime).hour() < 12) {
-        // Morning event
-        finalData[0].events.push({
-          id: doc.id,
-          ...data, // Include other fields from Firestore data
-          startTime: formattedStartTime,
-          endTime: formattedEndTime
-        });
-      } else {
-        // Afternoon event
-        finalData[1].events.push({
-          id: doc.id,
-          ...data, // Include other fields from Firestore data
-          startTime: formattedStartTime,
-          endTime: formattedEndTime
-        });
-      }
-    });
-    setItinerariesList(finalData);
+      let finalData = [
+        { title: 'Morning', events: [] },
+        { title: 'Afternoon', events: [] }
+      ];
+
+      itineraries.forEach((data) => {
+        // Convert the startTime and endTime from ISO strings to Date objects
+        const startTime = new Date(data.startTime);
+        const endTime = new Date(data.endTime);
+  
+        // Format time strings to local time (e.g., "12:30 PM")
+        const formattedStartTime = moment(startTime).format('hh:mm A');
+        const formattedEndTime = moment(endTime).format('hh:mm A');
+  
+        // Determine whether the event is morning or afternoon
+        if (moment(startTime).hour() < 12) {
+          // Morning event
+          finalData[0].events.push({
+            id: data.id,
+            ...data, // Include other fields from Supabase data
+            startTime: formattedStartTime,
+            endTime: formattedEndTime
+          });
+        } else {
+          // Afternoon event
+          finalData[1].events.push({
+            id: data.id,
+            ...data, // Include other fields from Supabase data
+            startTime: formattedStartTime,
+            endTime: formattedEndTime
+          });
+        }
+      });
+  
+      setItinerariesList(finalData);
+
+    }
+    catch (error) {
+      console.error('Error fetching data:', error);
+    }
+
+    return;
   }
 
 
@@ -421,16 +432,15 @@ const ItineraryScreen = () => {
     setLoading(true);
     try {
       if (hasRun.current === false) {
-        const itinerariesDatesRef = collection(db, "itineraries_dates");
-        let qDatesRef = query(itinerariesDatesRef, orderBy('date', 'asc'));
-        const querySnapshotDatesRef = await getDocs(qDatesRef);
+        const { data: itinerariesDates, error } = await supabase.rpc('get_distinct_start_dates');
 
-        const dataDatesOut = querySnapshotDatesRef.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        if (error) {
+          console.error('Error fetching distinct dates:', error);
+          return;
+        }
+
+        const dataDatesOut = itinerariesDates.map((record) => { return record['distinct_date'] });
         setDataDates(dataDatesOut);
-
         const dayList = Array.from(
           { length: dataDatesOut.length },
           (_, index) => `Day ${index + 1}`
@@ -444,6 +454,7 @@ const ItineraryScreen = () => {
 
         await fetchData(dataDatesOut, 0);
         hasRun.current = true;
+
       } else {
         console.log("secondary runs");
         let tabIndex = tabNames.indexOf(activeTab);
@@ -715,6 +726,9 @@ const ItineraryScreen = () => {
         keyExtractor={(item) => item.title}
         showsVerticalScrollIndicator={false}
         style={styles.content}
+        ListFooterComponent={() =>
+          loading ? <ActivityIndicator size="small" color="#0000ff" /> : null
+        }
       />
     </View>
   );
