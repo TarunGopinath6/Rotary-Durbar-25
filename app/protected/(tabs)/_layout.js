@@ -409,10 +409,10 @@
 import { Tabs, useRouter, useSegments } from "expo-router";
 import { useEffect, useState, createContext } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { auth, db } from "@/firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { auth } from "@/firebaseConfig";
 import { Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import supabase from "@/supabase.js"
 
 
 export const AppContext = createContext();
@@ -439,22 +439,26 @@ const _layout = () => {
     const checkUserStatus = async (user) => {
       if (user) {
         try {
-          const userRef = doc(db, "users", user.uid);
-          const userDoc = await getDoc(userRef);
-
-          if (!userDoc.exists()) {
-            router.replace("/");
-          }
-          else {
-            setUserData({ id: userDoc.id, ...userDoc.data() })
-            console.log(userDoc.data()?.name)
+          // Fetch the user data from the 'members' table using the user's ID
+          const { data: userDoc, error } = await supabase
+            .from('members')
+            .select('*')
+            .eq('id', user.uid) // Replace 'id' with your primary key in the 'members' table
+            .single();
+    
+          if (error || !userDoc) {
+            console.error("Error fetching user data or user does not exist:", error);
+            router.replace("/"); // Redirect to home if user does not exist
+          } else {
+            setUserData({ id: userDoc.id, ...userDoc });
+            console.log(userDoc.name);
           }
         } catch (error) {
-          console.error("Error fetching user data:", error);
-          router.replace("/");
+          console.error("Unexpected error:", error);
+          router.replace("/"); // Redirect to home if an unexpected error occurs
         }
       } else {
-        router.replace("/");
+        router.replace("/"); // Redirect to home if no user is logged in
       }
     };
 
