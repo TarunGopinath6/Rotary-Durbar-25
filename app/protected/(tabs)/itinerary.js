@@ -329,7 +329,8 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 import { db } from "@/firebaseConfig";
-import { collection, getDocs, query } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
+import moment from 'moment';
 import {
   useFonts,
   Inter_100Thin,
@@ -351,6 +352,7 @@ const ItineraryScreen = () => {
   const [loading, setLoading] = useState(true);
   const [tabNames, setTabNames] = useState([]);
   const [dataDates, setDataDates] = useState([]);
+  const [itinerariesList, setItinerariesList] = useState([]);
 
   const hasRun = useRef(false);
 
@@ -366,12 +368,61 @@ const ItineraryScreen = () => {
     Inter_900Black,
   });
 
+  const fetchData = async (dataDatesList, tabIndex) => {
+    const itinerariesRef = collection(db, "itineraries");
+    let startDateFilter = dataDatesList[tabIndex]['date'].toDate(); // Convert Firestore Timestamp to Date
+    let endDateFilter = new Date(startDateFilter.getTime() + 24 * 60 * 60 * 1000);
+    let qRef = query(
+      itinerariesRef,
+      orderBy('startTime', 'asc'),
+      where("startTime", ">=", startDateFilter),
+      where("startTime", "<=", endDateFilter)
+    );
+    const querySnapshotRef = await getDocs(qRef);
+    let finalData = [
+      { title: 'Morning', events: [] },
+      { title: 'Afternoon', events: [] }
+    ];
+    querySnapshotRef.forEach((doc) => {
+      let data = doc.data();
+
+      // Convert Firestore Timestamp to Date
+      const startTime = data.startTime.toDate(); // Assuming startTime is Firestore Timestamp
+      const endTime = data.endTime.toDate(); // Assuming endTime is Firestore Timestamp
+
+      // Format time strings to local time (e.g., "12:30 PM")
+      const formattedStartTime = moment(startTime).format('hh:mm A');
+      const formattedEndTime = moment(endTime).format('hh:mm A');
+
+      // Determine whether the event is morning or afternoon
+      if (moment(startTime).hour() < 12) {
+        // Morning event
+        finalData[0].events.push({
+          id: doc.id,
+          ...data, // Include other fields from Firestore data
+          startTime: formattedStartTime,
+          endTime: formattedEndTime
+        });
+      } else {
+        // Afternoon event
+        finalData[1].events.push({
+          id: doc.id,
+          ...data, // Include other fields from Firestore data
+          startTime: formattedStartTime,
+          endTime: formattedEndTime
+        });
+      }
+    });
+    setItinerariesList(finalData);
+  }
+
+
   const fetchTabs = async () => {
     setLoading(true);
     try {
       if (hasRun.current === false) {
         const itinerariesDatesRef = collection(db, "itineraries_dates");
-        let qDatesRef = query(itinerariesDatesRef);
+        let qDatesRef = query(itinerariesDatesRef, orderBy('date', 'asc'));
         const querySnapshotDatesRef = await getDocs(qDatesRef);
 
         const dataDatesOut = querySnapshotDatesRef.docs.map((doc) => ({
@@ -386,11 +437,17 @@ const ItineraryScreen = () => {
         );
         setTabNames(dayList);
 
-        console.log(new Date(dataDatesOut[0]["date"]["seconds"]));
-        console.log(dataDatesOut);
+        if (dayList.length <= 0) {
+          setItinerariesList([]);
+          return;
+        }
+
+        await fetchData(dataDatesOut, 0);
         hasRun.current = true;
       } else {
         console.log("secondary runs");
+        let tabIndex = tabNames.indexOf(activeTab);
+        await fetchData(dataDates, tabIndex);
       }
     } catch (error) {
       console.error("Error fetching tabs:", error);
@@ -652,7 +709,8 @@ const ItineraryScreen = () => {
 
       {/* Day Content */}
       <FlatList
-        data={dayData[activeTab]}
+        // data={dayData[activeTab]}
+        data={itinerariesList}
         renderItem={renderDaySection}
         keyExtractor={(item) => item.title}
         showsVerticalScrollIndicator={false}
