@@ -9,8 +9,6 @@ import {
   StatusBar,
   Linking,
 } from "react-native";
-import { db } from "@/firebaseConfig";
-import { collection, getDocs, query } from "firebase/firestore";
 import moment from "moment";
 import { AppContext } from "./_layout";
 import {
@@ -25,6 +23,7 @@ import {
   Inter_800ExtraBold,
   Inter_900Black,
 } from "@expo-google-fonts/inter";
+import supabase from '@/supabase.js'
 
 // import { LinearGradient } from 'expo-linear-gradient';
 
@@ -32,6 +31,7 @@ const App = () => {
   // Sample dictionary for testing
   const [activeTab, setActiveTab] = useState("All Posts");
   const [posts, setPosts] = useState([]);
+  const [notifs, setNotifs] = useState([]);
   const [loading, setLoading] = useState(true);
   const { userData, setUserData } = useContext(AppContext);
   let [fontsLoaded] = useFonts({
@@ -49,16 +49,19 @@ const App = () => {
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      const postRef = collection(db, "posts");
-      let q = query(postRef);
-      const querySnapshot = await getDocs(q);
+      const { data: postData, errorPosts } = await supabase.from('posts').select('*')
+      if (errorPosts) {
+        console.error('Error fetching posts:', errorPosts);
+        return;
+      }
+      setPosts(postData);
 
-      const data = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      setPosts(data);
+      const { data: notifsData, errorNotifs } = await supabase.from('notifs').select('*')
+      if (errorNotifs) {
+        console.error('Error fetching notifs:', errorNotifs);
+        return;
+      }
+      setNotifs(notifsData);
     } catch (error) {
       console.error("Error fetching posts:", error);
     } finally {
@@ -76,13 +79,6 @@ const App = () => {
     if (activeTab === "Links") return post.link;
     return true;
   });
-
-  const durbarDrumText = [
-    "All information regarding itinerary, fellow Magical Secretaries, your profile, support contacts and more will be available on this SETS app. The Team will update current events in real-time!",
-    "ATTENTION: Pre SETS I Session - 2 will resume in the Grand Hall at 11:15 am after the coffee break.",
-    "All information regarding itinerary, fellow Magical Secretaries, your profile, support contacts and more will be available on this SETS app. The Team will update current events in real-time!",
-    "ATTENTION: Pre SETS I Session - 2 will resume in the Grand Hall at 11:15 am after the coffee break.",
-  ];
 
   const formatTimestamp = (timestamp) => {
     const now = moment();
@@ -142,10 +138,10 @@ const App = () => {
             contentContainerStyle={styles.scrollContent}
             nestedScrollEnabled
           >
-            {durbarDrumText.map((point, index) => (
+            {notifs.map((record, index) => (
               <View key={index} style={styles.bulletPointContainer}>
                 <Text style={styles.bulletSymbol}>•</Text>
-                <Text style={styles.bulletText}>{point}</Text>
+                <Text style={styles.bulletText}>{record.data}</Text>
               </View>
             ))}
           </ScrollView>
