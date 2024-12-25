@@ -1,366 +1,3 @@
-// import React, { useEffect, useState } from "react";
-// import { View, Text, FlatList, StyleSheet, Button } from "react-native";
-// import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
-// import { collection, getDocs, setDoc, getDoc, doc, updateDoc, deleteDoc, query, orderBy, limit, startAfter, where, writeBatch } from "firebase/firestore";
-
-// import { db, auth } from "@/firebaseConfig";
-
-// export default function Members() {
-//   const [members, setMembers] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [lastVisibleDoc, setLastVisibleDoc] = useState(null);
-
-//   const PAGE_SIZE = 10;
-
-//   const fetchMembers = async (startDoc = null, reset = false) => {
-//     setLoading(true);
-
-//     if (reset) {
-//       setMembers([]);
-//       setLastVisibleDoc(null);
-//     }
-
-//     try {
-//       const memberRef = collection(db, 'users');
-//       let q = query(
-//         memberRef,
-//         where('role', 'not-in', ['admin',]),
-//         where('support', '==', false),
-//         orderBy('name', 'asc'),
-//         limit(PAGE_SIZE)
-//       );
-
-//       if (startDoc) {
-//         q = query(
-//           memberRef,
-//           where('role', 'not-in', ['admin',]),
-//           where('support', '==', false),
-//           orderBy('name', 'asc'),
-//           startAfter(startDoc),
-//           limit(PAGE_SIZE)
-//         );
-//       }
-
-//       const querySnapshot = await getDocs(q);
-
-//       if (querySnapshot.docs.length < PAGE_SIZE) {
-//         setLastVisibleDoc(null); // No more documents to fetch
-//       }
-
-//       if (!querySnapshot.empty) {
-//         const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-//         // Update last visible document or null if no more documents
-//         setLastVisibleDoc(querySnapshot.docs.length < PAGE_SIZE ? null : lastDoc);
-
-//         const data = querySnapshot.docs.map((doc) => {
-//           const docData = doc.data(); // Get the full document data
-
-//           // Return only the required fields along with the document ID
-//           return {
-//             id: doc.id,
-//             name: docData.name,
-//             affiliation: docData.affiliation,
-//             company_name: docData.company_name,
-//             company_sector: docData.company_sector,
-//           };
-//         });
-
-//         setMembers((prevMembers) => {
-//           const newIds = new Set(prevMembers.map((item) => item.id));
-//           const filteredData = data.filter((item) => !newIds.has(item.id));
-//           return [...prevMembers, ...filteredData];
-//         });
-//       } else {
-//         setLastVisibleDoc(null); // No more documents to fetch
-//       }
-//     } catch (error) {
-//       console.error("Error fetching members:", error);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const loadMoreData = () => {
-//     if (!lastVisibleDoc) {
-//       console.log('No more data')
-//       return;
-//     }
-//     fetchMembers(lastVisibleDoc);
-//   };
-
-//   const addRandomMembers = async () => {
-//     setLoading(true);
-
-//     const randomName = `User_${Math.floor(Math.random() * 1000)}`;
-//     const randomAffiliation = `Affiliation_${Math.floor(Math.random() * 100)}`;
-//     const randomSpouse = `Spouse_${Math.floor(Math.random() * 100)}`;
-//     const randomPhone = `+1-${Math.floor(Math.random() * 1000000000)}`;
-//     const randomEmail = `${randomName}@app.com`;
-//     const randomAddress = `Address ${Math.floor(Math.random() * 1000)}`;
-//     const randomCompanyName = `Company_${Math.floor(Math.random() * 100)}`;
-//     const randomCompanySector = `Sector_${Math.floor(Math.random() * 10)}`;
-//     const randomCompanyDescription = `Description of ${randomCompanyName}`;
-//     const randomCompanyEmail = `${randomCompanyName}@company.com`;
-//     const randomCompanyAddress = `Company Address ${Math.floor(Math.random() * 100)}`;
-//     const randomMemberSince = new Date().toISOString();
-//     const randomDateOfBirth = new Date(1980 + Math.floor(Math.random() * 40), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28)).toISOString();
-
-//     try {
-//       // Create user in Firebase Authentication
-//       const userCredential = await createUserWithEmailAndPassword(auth, randomEmail, randomName);
-//       const user = userCredential.user;
-
-//       // Now, add the user details to Firestore
-//       const userRef = doc(db, 'users', user.uid);
-//       await setDoc(userRef, {
-//         name: randomName,
-//         role: 'member', // Assuming 'member' as a role for simplicity
-//         support: false,
-//         affiliation: randomAffiliation,
-//         spouse: randomSpouse,
-//         member_since: randomMemberSince,
-//         date_of_birth: randomDateOfBirth,
-//         phone: randomPhone,
-//         email: randomEmail,
-//         address: randomAddress,
-//         company_name: randomCompanyName,
-//         company_sector: randomCompanySector,
-//         company_description: randomCompanyDescription,
-//         company_email: randomCompanyEmail,
-//         company_address: randomCompanyAddress,
-//       });
-
-//       console.log('Random member added:', randomName);
-//       fetchMembers(null, true)
-//     } catch (error) {
-//       console.error('Error adding random member:', error);
-//     }
-//     setLoading(false);
-
-//   };
-
-//   const updateMembers = async (id) => {
-//     setLoading(true);
-
-//     const randomCompany = `Comapny_${Math.random().toFixed(3)}`;
-//     try {
-//       const memberDoc = doc(db, "users", id);
-//       await updateDoc(memberDoc, { company_name: randomCompany });
-//       fetchMembers(null, true)
-//     } catch (error) {
-//       console.error("Error updating member:", error);
-//     }
-
-//     setLoading(false);
-//   };
-
-//   const deleteMembers = async (id) => {
-//     setLoading(true);
-
-//     try {
-//       const memberDoc = doc(db, "users", id);
-//       await deleteDoc(memberDoc);
-
-//       fetchMembers(null, true)
-//     } catch (error) {
-//       console.error("Error deleting member:", error);
-//     }
-
-//     setLoading(false);
-//   };
-
-//   const showMoreInfo = async (id) => {
-//     setLoading(true);
-//     try {
-//       const userRef = doc(db, "users", id);
-//       const userDoc = await getDoc(userRef);
-
-//       if (userDoc.exists()) {
-//         alert('Check console')
-//         console.log(userDoc.data())
-//       } else {
-//         console.log("No such user!");
-//       }
-//     } catch (error) {
-//       console.error("Error fetching user data: ", error);
-//     }
-
-//     setLoading(false);
-
-//   }
-
-//   const batchDeleteCollection = async () => {
-//     const collectionPath = "users"
-//     const batchSize = 500;
-
-//     setLoading(true);
-
-//     const collectionRef = collection(db, collectionPath);
-//     const q = query(
-//       collectionRef,
-//       where('role', 'not-in', ['admin',]),
-//       where('support', '==', false),
-//       orderBy('name', 'asc')
-//     );
-
-//     let totalDeleted = 0;
-//     let documentsToDelete = [];
-
-//     try {
-//       // Get all documents in the collection
-//       const querySnapshot = await getDocs(q);
-
-//       // Create batches of document references to delete
-//       for (const doc of querySnapshot.docs) {
-//         documentsToDelete.push(doc.ref);
-
-//         // When we reach the batch size, execute the batch delete
-//         if (documentsToDelete.length === batchSize) {
-//           await executeDelete(documentsToDelete);
-//           totalDeleted += documentsToDelete.length;
-//           documentsToDelete = [];
-//         }
-//       }
-
-//       // Delete any remaining documents
-//       if (documentsToDelete.length > 0) {
-//         await executeDelete(documentsToDelete);
-//         totalDeleted += documentsToDelete.length;
-//       }
-
-//       console.log(`Successfully deleted ${totalDeleted} documents from ${collectionPath}`);
-
-//     } catch (error) {
-//       console.error('Error deleting collection:', error);
-//     }
-
-//     setLoading(false);
-//     fetchMembers(null, true);
-//   }
-
-//   async function executeDelete(documentRefs) {
-//     const batch = writeBatch(db);
-
-//     documentRefs.forEach(docRef => {
-//       batch.delete(docRef);
-//     });
-
-//     await batch.commit();
-//   }
-
-//   useEffect(() => {
-//     fetchMembers();
-//   }, []);
-
-//   if (loading) {
-//     return (
-//       <View style={styles.container}>
-//         <Text style={styles.heading}>Members</Text>
-//         <Text>Loading...</Text>
-//       </View>
-//     );
-//   }
-
-//   if (members.length === 0) {
-//     return (
-//       <View style={styles.container}>
-//         <Text style={styles.heading}>Members</Text>
-//         <View style={styles.buttonContainer}>
-//           <Button title="Refresh" onPress={() => fetchMembers(null, true)} />
-//           <Button title="Add Random Member" onPress={addRandomMembers} />
-//         </View>
-//         <Text>No members found.</Text>
-//       </View>
-//     );
-//   }
-
-//   return (
-//     <View style={styles.mainContainer}>
-//       <Text style={styles.heading}>Members</Text>
-//       <View style={styles.buttonContainer}>
-//         <Button title="Refresh" onPress={() => fetchMembers(null, true)} />
-//         <Button title="Add Random Member" onPress={addRandomMembers} />
-//         <Button
-//           title="Delete All"
-//           onPress={batchDeleteCollection}
-//           color="red"
-//         />
-//       </View>
-
-//       <FlatList
-//         data={members}
-//         keyExtractor={(item) => item.id}
-//         renderItem={({ item }) => (
-//           <View style={styles.card}>
-
-//             <Text style={styles.title}>{item.title}</Text>
-//             <Text>Name: {item.name}</Text>
-//             <Text>affiliation: {item.affiliation}</Text>
-//             <Text>Comapny Name: {item.company_name}</Text>
-//             <Text>Comapny Sector: {item.company_sector}</Text>
-
-//             <View style={[styles.buttonContainer, { marginTop: 20 }]}>
-//               <Button
-//                 title="Update"
-//                 onPress={() => updateMembers(item.id)}
-//                 color="blue"
-//               />
-//               <Button
-//                 title="Show More Info"
-//                 onPress={() => showMoreInfo(item.id)}
-//                 color="green"
-//               />
-//               <Button
-//                 title="Delete"
-//                 onPress={() => deleteMembers(item.id)}
-//                 color="red"
-//               />
-//             </View>
-//           </View>
-//         )}
-//         contentContainerStyle={{ paddingBottom: 20 }}
-//       />
-//       {lastVisibleDoc && <Button onPress={loadMoreData} title="Load More" />}
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   mainContainer: {
-//     flexGrow: 1,
-//     flex: 1,
-//     padding: 16
-//   },
-//   container: {
-//     flex: 1,
-//     padding: 16,
-//   },
-//   buttonContainer: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     marginBottom: 16,
-//   },
-//   heading: {
-//     fontSize: 24, // Adjust size for different levels of headings
-//     fontWeight: 'bold', // Make it bold to distinguish as a heading
-//     color: '#333', // Choose your desired color
-//     textAlign: 'center', // Optional: Center align text
-//     marginBottom: 16, // Optional: Add some spacing below the heading
-//   },
-//   card: {
-//     marginBottom: 16,
-//     padding: 16,
-//     borderWidth: 1,
-//     borderColor: "#ddd",
-//     borderRadius: 8,
-//   },
-//   title: {
-//     fontSize: 18,
-//     fontWeight: "bold",
-//     marginBottom: 8,
-//   },
-// });
-
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -374,7 +11,7 @@ import {
   Linking,
   Platform,
   ScrollView,
-  ActivityIndicator 
+  ActivityIndicator,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import {
@@ -389,8 +26,7 @@ import {
   Inter_800ExtraBold,
   Inter_900Black,
 } from "@expo-google-fonts/inter";
-import supabase from "@/supabase.js"
-
+import supabase from "@/supabase.js";
 
 const DirectoryScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -417,13 +53,12 @@ const DirectoryScreen = () => {
     Inter_900Black,
   });
 
-
   const fetchMembers = async (offset = 0, queryText = "") => {
     let query = supabase
       .from("members")
       .select("*")
       .order("name", { ascending: true }) // Adjust the column for sorting as needed
-      .range(offset, offset + PAGE_SIZE - 1); ;
+      .range(offset, offset + PAGE_SIZE - 1);
 
     if (queryText) {
       query = query.or(
@@ -444,7 +79,7 @@ const DirectoryScreen = () => {
     if (loading) return; // Prevent multiple calls
     setLoading(true);
 
-    console.log('searching', queryText, offsetDoc)
+    console.log("searching", queryText, offsetDoc);
     let response = null;
 
     if (reset) {
@@ -461,7 +96,7 @@ const DirectoryScreen = () => {
       setHasMore(false); // No more data if fewer than limit records are returned
     }
 
-    setLoading(false)
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -473,182 +108,181 @@ const DirectoryScreen = () => {
     loadMembers(true, searchQuery);
   }, [searchQuery]);
 
-
   // Sample data - replace with your actual data source
-  const directoryData = [
-    {
-      about_your_business:
-        "We are an IT services and staff augmentation company headquartered in US and have branches in Hyderabad and Chennai.",
-      business_address: "Chennai",
-      business_website: "www.configusa.com",
-      club_name: "Rotary Club Of Madras Chenna Patna",
-      company_name: "Config Solutions Private Limited ",
-      date_of_birth: "11/04/1974",
-      designation: "Director",
-      email: "rcantony@gmail.com",
-      email_address: "rcantony@gmail.com",
-      emergency_contact_name: "Mariaselvi",
-      emergency_contact_phone: 9962882591,
-      emergency_contact_relationship: "Spouse",
-      meal_preference: "Non-Vegetarian",
-      name: "Antony Kumar RC",
-      phone: 9840960300,
-      photograph:
-        "https://drive.google.com/open?id=1BEHpmFfmoMsr9Zsq-r51KgxFAx5NOJEw",
-      residential_address:
-        "105/57A, Secretariat Colony 2nd street, Kilpauk, Chennai 600010",
-      role: "member",
-      rotarian_since: 2023,
-      rotary_foundation_title: "Paul Harris Fellow (PHF)",
-      sex: "Male",
-      shirt_size: 42,
-      spouses_name: "Mariaselvi",
-      support: false,
-      t_shirt_size: "XL",
-      type_of_business: "Professional Services",
-      wedding_anniversary: "28/05",
-      name: "Antony Kumar RC",
-      company_sector: "IT Services",
-      business_name: "Config Solutions Private Limited",
-    },
-    {
-      about_your_business:
-        "We are an IT services and staff augmentation company headquartered in US and have branches in Hyderabad and Chennai.",
-      business_address: "Chennai",
-      business_website: "www.configusa.com",
-      club_name: "Rotary Club Of Madras Chenna Patna",
-      company_name: "Config Solutions Private Limited ",
-      date_of_birth: { nanoseconds: 0, seconds: 134870400 },
-      designation: "Director",
-      email: "rcantony@gmail.com",
-      email_address: "rcantony@gmail.com",
-      emergency_contact_name: "Mariaselvi",
-      emergency_contact_phone: 9962882591,
-      emergency_contact_relationship: "Spouse",
-      meal_preference: "Non-Vegetarian",
-      name: "Antony Kumar RC",
-      phone: 9840960300,
-      photograph:
-        "https://drive.google.com/open?id=1BEHpmFfmoMsr9Zsq-r51KgxFAx5NOJEw",
-      residential_address:
-        "105/57A, Secretariat Colony 2nd street, Kilpauk, Chennai 600010",
-      role: "member",
-      rotarian_since: 2023,
-      rotary_foundation_title: "Paul Harris Fellow (PHF)",
-      sex: "Male",
-      shirt_size: 42,
-      spouses_name: "Mariaselvi",
-      support: false,
-      t_shirt_size: "XL",
-      type_of_business: "Professional Services",
-      wedding_anniversary: "28/05",
-      name: "Antony Kumar RC",
-      company_sector: "IT Services",
-    },
-    {
-      about_your_business:
-        "We are an IT services and staff augmentation company headquartered in US and have branches in Hyderabad and Chennai.",
-      business_address: "Chennai",
-      business_website: "www.configusa.com",
-      club_name: "Rotary Club Of Madras Chenna Patna",
-      company_name: "Config Solutions Private Limited ",
-      date_of_birth: { nanoseconds: 0, seconds: 134870400 },
-      designation: "Director",
-      email: "rcantony@gmail.com",
-      email_address: "rcantony@gmail.com",
-      emergency_contact_name: "Mariaselvi",
-      emergency_contact_phone: 9962882591,
-      emergency_contact_relationship: "Spouse",
-      meal_preference: "Non-Vegetarian",
-      name: "Antony Kumar RC",
-      phone: 9840960300,
-      photograph:
-        "https://drive.google.com/open?id=1BEHpmFfmoMsr9Zsq-r51KgxFAx5NOJEw",
-      residential_address:
-        "105/57A, Secretariat Colony 2nd street, Kilpauk, Chennai 600010",
-      role: "member",
-      rotarian_since: 2023,
-      rotary_foundation_title: "Paul Harris Fellow (PHF)",
-      sex: "Male",
-      shirt_size: 42,
-      spouses_name: "Mariaselvi",
-      support: false,
-      t_shirt_size: "XL",
-      type_of_business: "Professional Services",
-      wedding_anniversary: "28/05",
-      name: "Antony Kumar RC",
-      company_sector: "IT Services",
-    },
-    {
-      about_your_business:
-        "We are an IT services and staff augmentation company headquartered in US and have branches in Hyderabad and Chennai.",
-      business_address: "Chennai",
-      business_website: "www.configusa.com",
-      club_name: "Rotary Club Of Madras Chenna Patna",
-      company_name: "Config Solutions Private Limited ",
-      date_of_birth: { nanoseconds: 0, seconds: 134870400 },
-      designation: "Director",
-      email: "rcantony@gmail.com",
-      email_address: "rcantony@gmail.com",
-      emergency_contact_name: "Mariaselvi",
-      emergency_contact_phone: 9962882591,
-      emergency_contact_relationship: "Spouse",
-      meal_preference: "Non-Vegetarian",
-      name: "Antony Kumar RC",
-      phone: 9840960300,
-      photograph:
-        "https://drive.google.com/open?id=1BEHpmFfmoMsr9Zsq-r51KgxFAx5NOJEw",
-      residential_address:
-        "105/57A, Secretariat Colony 2nd street, Kilpauk, Chennai 600010",
-      role: "member",
-      rotarian_since: 2023,
-      rotary_foundation_title: "Paul Harris Fellow (PHF)",
-      sex: "Male",
-      shirt_size: 42,
-      spouses_name: "Mariaselvi",
-      support: false,
-      t_shirt_size: "XL",
-      type_of_business: "Professional Services",
-      wedding_anniversary: "28/05",
-      name: "Antony Kumar RC",
-      company_sector: "IT Services",
-    },
-    {
-      about_your_business:
-        "We are an IT services and staff augmentation company headquartered in US and have branches in Hyderabad and Chennai.",
-      business_address: "Chennai",
-      business_website: "www.configusa.com",
-      club_name: "Rotary Club Of Madras Chenna Patna",
-      company_name: "Config Solutions Private Limited ",
-      date_of_birth: { nanoseconds: 0, seconds: 134870400 },
-      designation: "Director",
-      email: "rcantony@gmail.com",
-      email_address: "rcantony@gmail.com",
-      emergency_contact_name: "Mariaselvi",
-      emergency_contact_phone: 9962882591,
-      emergency_contact_relationship: "Spouse",
-      meal_preference: "Non-Vegetarian",
-      name: "Antony Kumar RC",
-      phone: 9840960300,
-      photograph:
-        "https://drive.google.com/open?id=1BEHpmFfmoMsr9Zsq-r51KgxFAx5NOJEw",
-      residential_address:
-        "105/57A, Secretariat Colony 2nd street, Kilpauk, Chennai 600010",
-      role: "member",
-      rotarian_since: 2023,
-      rotary_foundation_title: "Paul Harris Fellow (PHF)",
-      sex: "Male",
-      shirt_size: 42,
-      spouses_name: "Mariaselvi",
-      support: false,
-      t_shirt_size: "XL",
-      type_of_business: "Professional Services",
-      wedding_anniversary: "28/05",
-      name: "Antony Kumar RC",
-      company_sector: "IT Services",
-    },
-    // Add more directory items here
-  ];
+  // const directoryData = [
+  //   {
+  //     about_your_business:
+  //       "We are an IT services and staff augmentation company headquartered in US and have branches in Hyderabad and Chennai.",
+  //     business_address: "Chennai",
+  //     business_website: "www.configusa.com",
+  //     club_name: "Rotary Club Of Madras Chenna Patna",
+  //     company_name: "Config Solutions Private Limited ",
+  //     date_of_birth: "11/04/1974",
+  //     designation: "Director",
+  //     email: "rcantony@gmail.com",
+  //     email_address: "rcantony@gmail.com",
+  //     emergency_contact_name: "Mariaselvi",
+  //     emergency_contact_phone: 9962882591,
+  //     emergency_contact_relationship: "Spouse",
+  //     meal_preference: "Non-Vegetarian",
+  //     name: "Antony Kumar RC",
+  //     phone: 9840960300,
+  //     photograph:
+  //       "https://drive.google.com/open?id=1BEHpmFfmoMsr9Zsq-r51KgxFAx5NOJEw",
+  //     residential_address:
+  //       "105/57A, Secretariat Colony 2nd street, Kilpauk, Chennai 600010",
+  //     role: "member",
+  //     rotarian_since: 2023,
+  //     rotary_foundation_title: "Paul Harris Fellow (PHF)",
+  //     sex: "Male",
+  //     shirt_size: 42,
+  //     spouses_name: "Mariaselvi",
+  //     support: false,
+  //     t_shirt_size: "XL",
+  //     type_of_business: "Professional Services",
+  //     wedding_anniversary: "28/05",
+  //     name: "Antony Kumar RC",
+  //     company_sector: "IT Services",
+  //     business_name: "Config Solutions Private Limited",
+  //   },
+  //   {
+  //     about_your_business:
+  //       "We are an IT services and staff augmentation company headquartered in US and have branches in Hyderabad and Chennai.",
+  //     business_address: "Chennai",
+  //     business_website: "www.configusa.com",
+  //     club_name: "Rotary Club Of Madras Chenna Patna",
+  //     company_name: "Config Solutions Private Limited ",
+  //     date_of_birth: { nanoseconds: 0, seconds: 134870400 },
+  //     designation: "Director",
+  //     email: "rcantony@gmail.com",
+  //     email_address: "rcantony@gmail.com",
+  //     emergency_contact_name: "Mariaselvi",
+  //     emergency_contact_phone: 9962882591,
+  //     emergency_contact_relationship: "Spouse",
+  //     meal_preference: "Non-Vegetarian",
+  //     name: "Antony Kumar RC",
+  //     phone: 9840960300,
+  //     photograph:
+  //       "https://drive.google.com/open?id=1BEHpmFfmoMsr9Zsq-r51KgxFAx5NOJEw",
+  //     residential_address:
+  //       "105/57A, Secretariat Colony 2nd street, Kilpauk, Chennai 600010",
+  //     role: "member",
+  //     rotarian_since: 2023,
+  //     rotary_foundation_title: "Paul Harris Fellow (PHF)",
+  //     sex: "Male",
+  //     shirt_size: 42,
+  //     spouses_name: "Mariaselvi",
+  //     support: false,
+  //     t_shirt_size: "XL",
+  //     type_of_business: "Professional Services",
+  //     wedding_anniversary: "28/05",
+  //     name: "Antony Kumar RC",
+  //     company_sector: "IT Services",
+  //   },
+  //   {
+  //     about_your_business:
+  //       "We are an IT services and staff augmentation company headquartered in US and have branches in Hyderabad and Chennai.",
+  //     business_address: "Chennai",
+  //     business_website: "www.configusa.com",
+  //     club_name: "Rotary Club Of Madras Chenna Patna",
+  //     company_name: "Config Solutions Private Limited ",
+  //     date_of_birth: { nanoseconds: 0, seconds: 134870400 },
+  //     designation: "Director",
+  //     email: "rcantony@gmail.com",
+  //     email_address: "rcantony@gmail.com",
+  //     emergency_contact_name: "Mariaselvi",
+  //     emergency_contact_phone: 9962882591,
+  //     emergency_contact_relationship: "Spouse",
+  //     meal_preference: "Non-Vegetarian",
+  //     name: "Antony Kumar RC",
+  //     phone: 9840960300,
+  //     photograph:
+  //       "https://drive.google.com/open?id=1BEHpmFfmoMsr9Zsq-r51KgxFAx5NOJEw",
+  //     residential_address:
+  //       "105/57A, Secretariat Colony 2nd street, Kilpauk, Chennai 600010",
+  //     role: "member",
+  //     rotarian_since: 2023,
+  //     rotary_foundation_title: "Paul Harris Fellow (PHF)",
+  //     sex: "Male",
+  //     shirt_size: 42,
+  //     spouses_name: "Mariaselvi",
+  //     support: false,
+  //     t_shirt_size: "XL",
+  //     type_of_business: "Professional Services",
+  //     wedding_anniversary: "28/05",
+  //     name: "Antony Kumar RC",
+  //     company_sector: "IT Services",
+  //   },
+  //   {
+  //     about_your_business:
+  //       "We are an IT services and staff augmentation company headquartered in US and have branches in Hyderabad and Chennai.",
+  //     business_address: "Chennai",
+  //     business_website: "www.configusa.com",
+  //     club_name: "Rotary Club Of Madras Chenna Patna",
+  //     company_name: "Config Solutions Private Limited ",
+  //     date_of_birth: { nanoseconds: 0, seconds: 134870400 },
+  //     designation: "Director",
+  //     email: "rcantony@gmail.com",
+  //     email_address: "rcantony@gmail.com",
+  //     emergency_contact_name: "Mariaselvi",
+  //     emergency_contact_phone: 9962882591,
+  //     emergency_contact_relationship: "Spouse",
+  //     meal_preference: "Non-Vegetarian",
+  //     name: "Antony Kumar RC",
+  //     phone: 9840960300,
+  //     photograph:
+  //       "https://drive.google.com/open?id=1BEHpmFfmoMsr9Zsq-r51KgxFAx5NOJEw",
+  //     residential_address:
+  //       "105/57A, Secretariat Colony 2nd street, Kilpauk, Chennai 600010",
+  //     role: "member",
+  //     rotarian_since: 2023,
+  //     rotary_foundation_title: "Paul Harris Fellow (PHF)",
+  //     sex: "Male",
+  //     shirt_size: 42,
+  //     spouses_name: "Mariaselvi",
+  //     support: false,
+  //     t_shirt_size: "XL",
+  //     type_of_business: "Professional Services",
+  //     wedding_anniversary: "28/05",
+  //     name: "Antony Kumar RC",
+  //     company_sector: "IT Services",
+  //   },
+  //   {
+  //     about_your_business:
+  //       "We are an IT services and staff augmentation company headquartered in US and have branches in Hyderabad and Chennai.",
+  //     business_address: "Chennai",
+  //     business_website: "www.configusa.com",
+  //     club_name: "Rotary Club Of Madras Chenna Patna",
+  //     company_name: "Config Solutions Private Limited ",
+  //     date_of_birth: { nanoseconds: 0, seconds: 134870400 },
+  //     designation: "Director",
+  //     email: "rcantony@gmail.com",
+  //     email_address: "rcantony@gmail.com",
+  //     emergency_contact_name: "Mariaselvi",
+  //     emergency_contact_phone: 9962882591,
+  //     emergency_contact_relationship: "Spouse",
+  //     meal_preference: "Non-Vegetarian",
+  //     name: "Antony Kumar RC",
+  //     phone: 9840960300,
+  //     photograph:
+  //       "https://drive.google.com/open?id=1BEHpmFfmoMsr9Zsq-r51KgxFAx5NOJEw",
+  //     residential_address:
+  //       "105/57A, Secretariat Colony 2nd street, Kilpauk, Chennai 600010",
+  //     role: "member",
+  //     rotarian_since: 2023,
+  //     rotary_foundation_title: "Paul Harris Fellow (PHF)",
+  //     sex: "Male",
+  //     shirt_size: 42,
+  //     spouses_name: "Mariaselvi",
+  //     support: false,
+  //     t_shirt_size: "XL",
+  //     type_of_business: "Professional Services",
+  //     wedding_anniversary: "28/05",
+  //     name: "Antony Kumar RC",
+  //     company_sector: "IT Services",
+  //   },
+  //   // Add more directory items here
+  // ];
 
   const handleCall = (phoneNumber) => {
     Linking.openURL(`tel:${phoneNumber}`);
@@ -672,7 +306,6 @@ const DirectoryScreen = () => {
     });
   };
 
-
   const handleSearch = (query) => {
     const lowercaseQuery = query.toLowerCase();
     const filtered = directoryData.filter(
@@ -695,7 +328,7 @@ const DirectoryScreen = () => {
       <Image
         source={{ uri: item.photograph }}
         style={styles.profileImage}
-      //source={require("../../../assets/images/rotary_logo.png")}
+        //source={require("../../../assets/images/rotary_logo.png")}
       />
       <Text style={styles.name}>{item.name}</Text>
       <Text style={styles.clubName}>{item.club_name}</Text>
@@ -705,9 +338,22 @@ const DirectoryScreen = () => {
     </TouchableOpacity>
   );
 
-  const formatDate = (dateObj) => {
-    if (!dateObj || !dateObj.seconds) return "01/01/1980";
-    return new Date(dateObj.seconds * 1000).toLocaleDateString();
+  // const formatDate = (dateObj) => {
+  //   if (!dateObj || !dateObj.seconds) return "01/01/1980";
+  //   return new Date(dateObj.seconds * 1000).toLocaleDateString();
+  // };
+
+  const formatDate = (timestamp) => {
+    if (!timestamp) return null; // Handle null or undefined values
+    if (typeof timestamp === "string" && timestamp.length < 6) {
+      return timestamp; // Return the value as is if its length is greater than 5
+    }
+    const date = new Date(timestamp);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+    return null;
   };
 
   // Add this component inside DirectoryScreen but before the return statement
@@ -764,8 +410,10 @@ const DirectoryScreen = () => {
               />
               <Text style={styles.modalName}>{selectedMember.name}</Text>
               <View style={styles.clubNameContainer}>
-                <Text style={styles.modalClubName}>{clubName.firstLine}</Text>
-                {clubName.secondLine && (
+                {clubName.firstLine && (
+                  <Text style={styles.modalClubName}>{clubName.firstLine}</Text>
+                )}
+                {clubName.secondLine && clubName.secondLine !== "NA" && (
                   <Text style={styles.modalClubName}>
                     {clubName.secondLine}
                   </Text>
@@ -774,204 +422,313 @@ const DirectoryScreen = () => {
 
               <View style={styles.modalSeparator} />
 
-              <View style={styles.actionButtonsTop}>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={() => handleCall(selectedMember.phone)}
-                >
-                  <Ionicons name="call" size={24} color="#A32638" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={() => handleEmail(selectedMember.email)}
-                >
-                  <Ionicons name="mail" size={24} color="#A32638" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={() => handleMaps(selectedMember.business_address)}
-                >
-                  <Ionicons name="location" size={24} color="#A32638" />
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity
-                style={styles.emergencyButton}
-                onPress={() =>
-                  handleCall(selectedMember.emergency_contact_phone)
-                }
+              <View
+                style={[
+                  styles.actionButtonsTop,
+                  { textTransform: "capitalize" },
+                ]}
               >
-                <Text style={styles.emergencyText}>Emergency</Text>
-              </TouchableOpacity>
-
-              <Text style={styles.sectionTitle}>Rotary</Text>
-              {/* Rotary Information */}
-              <View style={styles.infoSection}>
-                <View style={styles.infoRow}>
-                  <Image
-                    source={require("../../../assets/images/cheer_icon.png")}
-                    style={[styles.rotaryIcon, { tintColor: "#A32638" }]}
-                  />
-                  <Text style={styles.infoText}>
-                    {selectedMember.rotarian_since}
-                  </Text>
-                </View>
-                {selectedMember.rotary_foundation_title &&
-                  selectedMember.rotary_foundation_title !== "NA" && (
-                    <View style={styles.infoRow}>
-                      <Ionicons name="ribbon" size={20} color="#A32638" />
-                      <Text style={styles.infoText}>
-                        {selectedMember.rotary_foundation_title}
-                      </Text>
-                    </View>
+                {selectedMember.phone && selectedMember.phone !== "NA" && (
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => handleCall(selectedMember.phone)}
+                  >
+                    <Ionicons name="call" size={24} color="#A32638" />
+                  </TouchableOpacity>
+                )}
+                {selectedMember.email && selectedMember.email !== "NA" && (
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => handleEmail(selectedMember.email)}
+                  >
+                    <Ionicons name="mail" size={24} color="#A32638" />
+                  </TouchableOpacity>
+                )}
+                {selectedMember.business_address &&
+                  selectedMember.business_address !== "NA" && (
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      onPress={() =>
+                        handleMaps(selectedMember.business_address)
+                      }
+                    >
+                      <Ionicons name="location" size={24} color="#A32638" />
+                    </TouchableOpacity>
                   )}
               </View>
+
+              {selectedMember.emergency_contact_phone &&
+                selectedMember.emergency_contact_phone !== "NA" && (
+                  <TouchableOpacity
+                    style={styles.emergencyButton}
+                    onPress={() =>
+                      handleCall(
+                        parseFloat(selectedMember.emergency_contact_phone)
+                      )
+                    }
+                  >
+                    <Text style={styles.emergencyText}>Emergency</Text>
+                  </TouchableOpacity>
+                )}
+
+              {selectedMember.rotarian_since &&
+                selectedMember.rotarian_since !== "NA" && (
+                  <Text style={styles.sectionTitle}>Rotary</Text>
+                )}
+              {/* Rotary Information */}
+              {selectedMember.rotarian_since &&
+                selectedMember.rotarian_since !== "NA" && (
+                  <View style={styles.infoSection}>
+                    <View style={styles.infoRow}>
+                      <Image
+                        source={require("../../../assets/images/cheer_icon.png")}
+                        style={[styles.rotaryIcon, { tintColor: "#A32638" }]}
+                      />
+                      <Text style={styles.infoText}>
+                        {selectedMember.rotarian_since}
+                      </Text>
+                    </View>
+                    {selectedMember.rotary_foundation_title &&
+                      selectedMember.rotary_foundation_title !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons name="ribbon" size={20} color="#A32638" />
+                          <Text style={styles.infoText}>
+                            {selectedMember.rotary_foundation_title}
+                          </Text>
+                        </View>
+                      )}
+                  </View>
+                )}
 
               <View style={styles.sectionSeparator} />
 
               {/* Business Information */}
-              <Text style={styles.sectionTitle}>Business</Text>
-              <View style={styles.infoSection}>
-                <View style={styles.infoRow}>
-                  <Ionicons name="business" size={20} color="#A32638" />
-                  <Text
-                    style={[
-                      styles.infoText,
-                      { fontFamily: "Inter_600SemiBold" },
-                    ]}
-                  >
-                    {selectedMember.business_name}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="person-circle" size={20} color="#fff" />
-                  <Text
-                    style={[
-                      styles.infoText,
-                      { fontFamily: "Inter_600SemiBold" },
-                    ]}
-                  >
-                    {selectedMember.designation}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="briefcase" size={20} color="#fff" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.type_of_business}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="layers" size={20} color="#fff" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.company_sector}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="information-circle" size={20} color="#fff" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.about_your_business}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="location" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.business_address}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.infoRow}
-                  onPress={() => handleWebsite(selectedMember.business_website)}
-                >
-                  <Ionicons name="globe" size={20} color="#A32638" />
-                  <Text style={[styles.infoText, styles.linkText]}>
-                    {selectedMember.business_website}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              {selectedMember.company_name &&
+                selectedMember.company_name !== "NA" && (
+                  <Text style={styles.sectionTitle}>Business</Text>
+                )}
+              {selectedMember.company_name &&
+                selectedMember.company_name !== "NA" && (
+                  <View style={styles.infoSection}>
+                    <View style={styles.infoRow}>
+                      <Ionicons name="business" size={20} color="#A32638" />
+                      <Text
+                        style={[
+                          styles.infoText,
+                          { fontFamily: "Inter_600SemiBold" },
+                        ]}
+                      >
+                        {selectedMember.company_name}
+                      </Text>
+                    </View>
+                    {selectedMember.designation &&
+                      selectedMember.designation !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons
+                            name="person-circle"
+                            size={20}
+                            color="#fff"
+                          />
+                          <Text
+                            style={[
+                              styles.infoText,
+                              { fontFamily: "Inter_600SemiBold" },
+                            ]}
+                          >
+                            {selectedMember.designation}
+                          </Text>
+                        </View>
+                      )}
+                    {selectedMember.type_of_business &&
+                      selectedMember.type_of_business !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons name="briefcase" size={20} color="#fff" />
+                          <Text style={styles.infoText}>
+                            {selectedMember.type_of_business}
+                          </Text>
+                        </View>
+                      )}
+                    {selectedMember.company_sector &&
+                      selectedMember.company_sector !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons name="layers" size={20} color="#fff" />
+                          <Text style={styles.infoText}>
+                            {selectedMember.company_sector}
+                          </Text>
+                        </View>
+                      )}
+                    {selectedMember.about_your_business &&
+                      selectedMember.about_your_business !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons
+                            name="information-circle"
+                            size={20}
+                            color="#fff"
+                          />
+                          <Text style={styles.infoText}>
+                            {selectedMember.about_your_business}
+                          </Text>
+                        </View>
+                      )}
+                    {selectedMember.business_address &&
+                      selectedMember.business_address !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons name="location" size={20} color="#A32638" />
+                          <Text style={styles.infoText}>
+                            {selectedMember.business_address}
+                          </Text>
+                        </View>
+                      )}
+                    {selectedMember.business_website &&
+                      selectedMember.business_website !== "NA" && (
+                        <TouchableOpacity
+                          style={styles.infoRow}
+                          onPress={() =>
+                            handleWebsite(selectedMember.business_website)
+                          }
+                        >
+                          <Ionicons name="globe" size={20} color="#A32638" />
+                          <Text style={[styles.infoText, styles.linkText]}>
+                            {selectedMember.business_website}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                  </View>
+                )}
 
               <View style={styles.sectionSeparator} />
 
               {/* Personal Information */}
-              <Text style={styles.sectionTitle}>Personal</Text>
-              <View style={styles.infoSection}>
-                <View style={styles.infoRow}>
-                  <Ionicons name="person" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>{selectedMember.sex}</Text>
+              {selectedMember.sex && selectedMember.sex !== "NA" && (
+                <Text style={styles.sectionTitle}>Personal</Text>
+              )}
+              {selectedMember.sex && selectedMember.sex !== "NA" && (
+                <View style={styles.infoSection}>
+                  <View style={styles.infoRow}>
+                    <Ionicons name="person" size={20} color="#A32638" />
+                    <Text style={styles.infoText}>{selectedMember.sex}</Text>
+                  </View>
+                  {selectedMember.spouses_name &&
+                    selectedMember.spouses_name !== "NA" && (
+                      <View style={styles.infoRow}>
+                        <Ionicons name="heart" size={20} color="#A32638" />
+                        <Text style={styles.infoText}>
+                          {selectedMember.spouses_name}
+                        </Text>
+                      </View>
+                    )}
+                  {selectedMember.wedding_anniversary &&
+                    selectedMember.wedding_anniversary !== "NA" && (
+                      <View style={styles.infoRow}>
+                        <Ionicons name="gift" size={20} color="#A32638" />
+                        <Text style={styles.infoText}>
+                          {formatDate(selectedMember.wedding_anniversary)}
+                        </Text>
+                      </View>
+                    )}
+                  {selectedMember.date_of_birth &&
+                    selectedMember.date_of_birth !== "NA" && (
+                      <View style={styles.infoRow}>
+                        <Ionicons name="calendar" size={20} color="#A32638" />
+                        <Text style={styles.infoText}>
+                          {formatDate(selectedMember.date_of_birth)}
+                        </Text>
+                      </View>
+                    )}
+                  {selectedMember.residential_address &&
+                    selectedMember.residential_address !== "NA" && (
+                      <View style={styles.infoRow}>
+                        <Ionicons name="home" size={20} color="#A32638" />
+                        <Text style={styles.infoText}>
+                          {selectedMember.residential_address}
+                        </Text>
+                      </View>
+                    )}
                 </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="heart" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.spouses_name}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="gift" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.wedding_anniversary}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="calendar" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {/* {selectedMember.date_of_birth} */}
-                    11/04/1974
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="home" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.residential_address}
-                  </Text>
-                </View>
-              </View>
+              )}
 
               <View style={styles.sectionSeparator} />
 
-              <Text style={styles.sectionTitle}>Emergency Contact</Text>
-              <View style={styles.infoSection}>
-                <View style={styles.infoRow}>
-                  <Ionicons name="alert-circle" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.emergency_contact_name}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="people" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.emergency_contact_relationship}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="call" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.emergency_contact_phone}
-                  </Text>
-                </View>
-              </View>
+              {/* Emergency Contact */}
+              {selectedMember.emergency_contact_name &&
+                selectedMember.emergency_contact_name !== "NA" && (
+                  <Text style={styles.sectionTitle}>Emergency Contact</Text>
+                )}
+              {selectedMember.emergency_contact_name &&
+                selectedMember.emergency_contact_name !== "NA" && (
+                  <View style={styles.infoSection}>
+                    <View style={styles.infoRow}>
+                      <Ionicons name="alert-circle" size={20} color="#A32638" />
+                      <Text style={styles.infoText}>
+                        {selectedMember.emergency_contact_name}
+                      </Text>
+                    </View>
+                    {selectedMember.emergency_contact_relationship &&
+                      selectedMember.emergency_contact_relationship !==
+                        "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons name="people" size={20} color="#A32638" />
+                          <Text style={styles.infoText}>
+                            {selectedMember.emergency_contact_relationship}
+                          </Text>
+                        </View>
+                      )}
+                    {selectedMember.emergency_contact_phone &&
+                      selectedMember.emergency_contact_phone !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons name="call" size={20} color="#A32638" />
+                          <Text style={styles.infoText}>
+                            {selectedMember.emergency_contact_phone}
+                          </Text>
+                        </View>
+                      )}
+                  </View>
+                )}
 
               <View style={styles.sectionSeparator} />
 
-              <Text style={styles.sectionTitle}>Preferences</Text>
-              <View style={styles.infoSection}>
-                <View style={styles.infoRow}>
-                  <Ionicons name="shirt" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.shirt_size}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="shirt-outline" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.t_shirt_size}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="restaurant" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.meal_preference}
-                  </Text>
-                </View>
-              </View>
+              {/* Preferences */}
+              {selectedMember.shirt_size &&
+                selectedMember.shirt_size !== "NA" && (
+                  <Text style={styles.sectionTitle}>Preferences</Text>
+                )}
+              {selectedMember.shirt_size &&
+                selectedMember.shirt_size !== "NA" && (
+                  <View style={styles.infoSection}>
+                    <View style={styles.infoRow}>
+                      <Ionicons name="shirt" size={20} color="#A32638" />
+                      <Text style={styles.infoText}>
+                        {selectedMember.shirt_size}
+                      </Text>
+                    </View>
+                    {selectedMember.t_shirt_size &&
+                      selectedMember.t_shirt_size !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons
+                            name="shirt-outline"
+                            size={20}
+                            color="#A32638"
+                          />
+                          <Text style={styles.infoText}>
+                            {selectedMember.t_shirt_size}
+                          </Text>
+                        </View>
+                      )}
+                    {selectedMember.meal_preference &&
+                      selectedMember.meal_preference !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons
+                            name="restaurant"
+                            size={20}
+                            color="#A32638"
+                          />
+                          <Text style={styles.infoText}>
+                            {selectedMember.meal_preference}
+                          </Text>
+                        </View>
+                      )}
+                  </View>
+                )}
             </ScrollView>
           </View>
         </View>
@@ -1021,7 +778,7 @@ const DirectoryScreen = () => {
         onEndReached={() => {
           if (hasMore) loadMembers();
         }}
-        onEndReachedThreshold={0.5} 
+        onEndReachedThreshold={0.5}
         ListFooterComponent={() =>
           loading ? <ActivityIndicator size="small" color="#0000ff" /> : null
         }
@@ -1047,7 +804,6 @@ const styles = StyleSheet.create({
   infoTextWithIcon: {
     flex: 1,
   },
-  // Styles to add:
   sectionTitle: {
     fontSize: 18,
     fontFamily: "Inter_600SemiBold",
@@ -1194,6 +950,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    paddingBottom: 80,
   },
   header: {
     backgroundColor: "#A32638",
@@ -1300,16 +1057,16 @@ const styles = StyleSheet.create({
   },
   companyName: {
     fontSize: 12,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Inter_600SemiBold",
     color: "#666",
-    textAlign: "left",
+    textAlign: "center",
     marginBottom: 5,
   },
   businessType: {
     fontSize: 12,
     color: "#666",
-    fontFamily: "Inter_400Regular",
-    textAlign: "left",
+    fontFamily: "Inter_500Regular",
+    textAlign: "center",
   },
 });
 

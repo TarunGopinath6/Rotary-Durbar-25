@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   StatusBar,
   Linking,
+  Dimensions,
   Alert,
 } from "react-native";
 import moment from "moment";
@@ -24,8 +25,7 @@ import {
   Inter_800ExtraBold,
   Inter_900Black,
 } from "@expo-google-fonts/inter";
-import supabase from '@/supabase.js'
-import { Button } from "react-native-web";
+import supabase from "@/supabase.js";
 
 // import { LinearGradient } from 'expo-linear-gradient';
 
@@ -36,7 +36,7 @@ const App = () => {
   const [notifs, setNotifs] = useState([]);
   const [loading, setLoading] = useState(true);
   const { userData, setUserData } = useContext(AppContext);
-  const [refresh, setRefresh] = useState(null)
+  const [refresh, setRefresh] = useState(null);
 
   let [fontsLoaded] = useFonts({
     Inter_100Thin,
@@ -55,19 +55,23 @@ const App = () => {
     try {
       //const { data: postData, errorPosts } = await supabase.from('posts').select('*')
 
-      const { data: postData, error: errorPosts } = await supabase
-        .rpc('fetch_posts_with_likes_and_user_status', { user_id: `${userData.id}` });
+      const { data: postData, error: errorPosts } = await supabase.rpc(
+        "fetch_posts_with_likes_and_user_status",
+        { user_id: `${userData.id}` }
+      );
       if (errorPosts) {
-        console.error('Error fetching posts:', errorPosts);
+        console.error("Error fetching posts:", errorPosts);
         return;
       }
 
-      console.log(postData)
+      console.log(postData);
       setPosts(postData);
 
-      const { data: notifsData, errorNotifs } = await supabase.from('notifs').select('*')
+      const { data: notifsData, errorNotifs } = await supabase
+        .from("notifs")
+        .select("*");
       if (errorNotifs) {
-        console.error('Error fetching notifs:', errorNotifs);
+        console.error("Error fetching notifs:", errorNotifs);
         return;
       }
       setNotifs(notifsData);
@@ -78,41 +82,52 @@ const App = () => {
     }
   };
 
+  const [activePostId, setActivePostId] = useState(null); // Track the active post for overlay
+  const lastPress = useRef(0);
+  const handleDoublePress = (postId, userId) => {
+    const currentTime = Date.now();
+    const timeDifference = currentTime - lastPress.current;
+
+    if (timeDifference < 300) {
+      likePost(userId, postId);
+      setActivePostId(postId);
+      setTimeout(() => setActivePostId(null), 1000); // Show overlay for 1 second
+    }
+
+    lastPress.current = currentTime;
+  };
+
   const likePost = async (userId, postId) => {
     // First, check if the user has already liked this post
-    const { data, error } = await supabase
-      .from('likes')
-      .insert([
-        {
-          user_id: userId,
-          post_id: postId,
-        }
-      ])
+    const { data, error } = await supabase.from("likes").insert([
+      {
+        user_id: userId,
+        post_id: postId,
+      },
+    ]);
     //.onConflict(['user_id', 'post_id']); // Prevent duplicates by user_id and post_id
 
     if (error) {
-      console.error('Error liking post:', error);
+      console.error("Error liking post:", error);
     } else {
-      console.log('Post liked successfully:', data);
-      alert("Post liked successfully")
-      Alert.alert("Post liked successfully")
-      setRefresh(new Date())
+      console.log("Post liked successfully:", data);
+      setRefresh(new Date());
     }
   };
 
   const unlikePost = async (userId, postId) => {
     const { data, error } = await supabase
-      .from('likes')
+      .from("likes")
       .delete()
       .match({ user_id: userId, post_id: postId });
 
     if (error) {
-      console.error('Error unliking post:', error);
+      console.error("Error unliking post:", error);
     } else {
-      console.log('Post unliked successfully:', data);
-      alert("Post unliked successfully")
-      Alert.alert("Post unliked successfully")
-      setRefresh(new Date())
+      console.log("Post unliked successfully:", data);
+      alert("Post unliked successfully");
+      Alert.alert("Post unliked successfully");
+      setRefresh(new Date());
     }
   };
 
@@ -152,6 +167,8 @@ const App = () => {
         translucent={false}
       />
       <ScrollView style={styles.container} nestedScrollEnabled>
+        <View style={styles.topBackground} />
+
         {/* Header */}
         <View style={styles.header}>
           <Image
@@ -159,12 +176,10 @@ const App = () => {
             style={styles.headerImage}
           />
           <Text style={styles.headerText}>
-            Hi, {userData?.name ?? "NA"}!
+            Hi, Rtn. {userData?.name ?? "NA"}!
           </Text>
-          <Text style={styles.headerSubText}>
-            Prepare to be spellbound by preSETS I
-          </Text>
-          <Text style={styles.headerDate}>January 15th - 18th, 2024</Text>
+          <Text style={styles.headerSubText}>preSETS I</Text>
+          <Text style={styles.headerDate}>January 11th, 2025</Text>
         </View>
 
         {/* Rotary Logos */}
@@ -175,7 +190,7 @@ const App = () => {
           />
           <Text style={styles.logoText}>District 3234</Text>
           <Image
-            source={require("../../../assets/images/rotary_slogan.png")}
+            source={require("../../../assets/images/rotary_slogan.jpg")}
             style={styles.logo}
           />
         </View>
@@ -219,7 +234,11 @@ const App = () => {
         {loading === true && "Loading..."}
 
         {filteredPosts.map((item, index) => (
-          <View style={styles.postContainer} key={index}>
+          <TouchableOpacity
+            style={styles.postContainer}
+            key={index}
+            onPress={() => handleDoublePress(item.post_id, item.user_id)}
+          >
             <Text style={styles.postText}>{item.text}</Text>
             {item.image && (
               <Image source={item.image} style={styles.postImage} />
@@ -239,17 +258,31 @@ const App = () => {
                   style={styles.cheerIcon}
                 />
                 <Text style={styles.cheersText}>{item.likes_count} cheers</Text>
-                <Button title="Like" onPress={() => likePost(userData.id, item.post_id)} />
-                <Button title="Remove Like" onPress={() => unlikePost(userData.id, item.post_id)} />
+                <TouchableOpacity
+                  title="Like"
+                  onPress={() => likePost(userData.id, item.post_id)}
+                />
+                <TouchableOpacity
+                  title="Remove Like"
+                  onPress={() => unlikePost(userData.id, item.post_id)}
+                />
                 {item.user_has_liked === true && "LIKED"}
-                <Text>{item.post_id}</Text>
+                {/* <Text>{item.post_id}</Text> */}
               </View>
               <Text style={styles.eventText}>{item.event}</Text>
               <Text style={styles.timestamp}>
                 {formatTimestamp(item.timedata)}
               </Text>
             </View>
-          </View>
+            {activePostId === item.post_id && ( // Show overlay only for the active post
+              <View style={styles.overlay}>
+                <Image
+                  source={require("../../../assets/images/cheer_icon.png")}
+                  style={styles.overlayImage}
+                />
+              </View>
+            )}
+          </TouchableOpacity>
         ))}
         <View
           style={{ width: "100%", height: 100, backgroundColor: "#fff" }}
@@ -259,7 +292,34 @@ const App = () => {
   );
 };
 
+const screenHeight = Dimensions.get("window").height;
+
 const styles = StyleSheet.create({
+  topBackground: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: screenHeight * 0.2,
+    width: "100%",
+    backgroundColor: "#a32638",
+    zIndex: 0,
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255, 0.5)", // Slight transparent overlay
+    borderRadius: 30,
+  },
+  overlayImage: {
+    width: 50, // Adjust the size as needed
+    height: 50,
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",

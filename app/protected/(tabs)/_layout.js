@@ -412,18 +412,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { auth } from "@/firebaseConfig";
 import { Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import supabase from "@/supabase.js"
-
+import supabase from "@/supabase.js";
 
 export const AppContext = createContext();
-
 
 const _layout = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const segments = useSegments();
 
-  const [userData, setUserData] = useState({})
+  const [userData, setUserData] = useState({});
 
   const getBottomPadding = () => {
     if (Platform.OS === "ios") {
@@ -441,13 +439,16 @@ const _layout = () => {
         try {
           // Fetch the user data from the 'members' table using the user's ID
           const { data: userDoc, error } = await supabase
-            .from('members')
-            .select('*')
-            .eq('id', user.uid) // Replace 'id' with your primary key in the 'members' table
+            .from("members")
+            .select("*")
+            .eq("id", user.uid) // Replace 'id' with your primary key in the 'members' table
             .single();
-    
+
           if (error || !userDoc) {
-            console.error("Error fetching user data or user does not exist:", error);
+            console.error(
+              "Error fetching user data or user does not exist:",
+              error
+            );
             router.replace("/"); // Redirect to home if user does not exist
           } else {
             setUserData({ id: userDoc.id, ...userDoc });
@@ -519,7 +520,7 @@ const _layout = () => {
         <Tabs.Screen name="members" options={{ title: "Network" }} />
         <Tabs.Screen name="index" options={{ title: "Home" }} />
         <Tabs.Screen name="profile" options={{ title: "Profile" }} />
-        <Tabs.Screen name="support" options={{ title: "Support" }} />
+        <Tabs.Screen name="support" options={{ title: "SETS Team" }} />
       </Tabs>
     </AppContext.Provider>
   );

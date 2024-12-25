@@ -329,7 +329,7 @@ import {
   TouchableWithoutFeedback,
   ActivityIndicator,
 } from "react-native";
-import moment from 'moment';
+import moment from "moment";
 import {
   useFonts,
   Inter_100Thin,
@@ -342,8 +342,7 @@ import {
   Inter_800ExtraBold,
   Inter_900Black,
 } from "@expo-google-fonts/inter";
-import supabase from '@/supabase.js'
-
+import supabase from "@/supabase.js";
 
 const ItineraryScreen = () => {
   const [activeTab, setActiveTab] = useState("Day 1");
@@ -371,32 +370,35 @@ const ItineraryScreen = () => {
 
   const fetchData = async (dataDatesList, tabIndex) => {
     let startDateFilter = new Date(dataDatesList[tabIndex]); // Convert Firestore Timestamp to Date
-    let endDateFilter = new Date(startDateFilter.getTime() + 24 * 60 * 60 * 1000);
+    let endDateFilter = new Date(
+      startDateFilter.getTime() + 24 * 60 * 60 * 1000
+    );
 
     try {
       const { data: itineraries, error } = await supabase
-        .from('itineraries')
-        .select('*')
-        .gte('startTime', startDateFilter.toISOString())  // Filter events that start after startDateFilter
-        .lte('startTime', endDateFilter.toISOString())   // Filter events that start before endDateFilter
-        .order('startTime', { ascending: true });
+        .from("itineraries")
+        .select("*")
+        .gte("startTime", startDateFilter.toISOString()) // Filter events that start after startDateFilter
+        .lte("startTime", endDateFilter.toISOString()) // Filter events that start before endDateFilter
+        .order("startTime", { ascending: true });
 
       if (error) throw error;
 
       let finalData = [
-        { title: 'Morning', events: [] },
-        { title: 'Afternoon', events: [] }
+        { title: "Morning", events: [] },
+        { title: "Afternoon", events: [] },
+        { title: "Evening", events: [] },
       ];
 
       itineraries.forEach((data) => {
         // Convert the startTime and endTime from ISO strings to Date objects
         const startTime = new Date(data.startTime);
         const endTime = new Date(data.endTime);
-  
+
         // Format time strings to local time (e.g., "12:30 PM")
-        const formattedStartTime = moment(startTime).format('hh:mm A');
-        const formattedEndTime = moment(endTime).format('hh:mm A');
-  
+        const formattedStartTime = moment(startTime).format("hh:mm A");
+        const formattedEndTime = moment(endTime).format("hh:mm A");
+
         // Determine whether the event is morning or afternoon
         if (moment(startTime).hour() < 12) {
           // Morning event
@@ -404,42 +406,53 @@ const ItineraryScreen = () => {
             id: data.id,
             ...data, // Include other fields from Supabase data
             startTime: formattedStartTime,
-            endTime: formattedEndTime
+            endTime: formattedEndTime,
           });
-        } else {
-          // Afternoon event
+        } else if (
+          moment(startTime).hour() > 12 &&
+          moment(startTime).hour() < 16
+        ) {
           finalData[1].events.push({
             id: data.id,
             ...data, // Include other fields from Supabase data
             startTime: formattedStartTime,
-            endTime: formattedEndTime
+            endTime: formattedEndTime,
+          });
+        } else {
+          // Afternoon event
+          finalData[2].events.push({
+            id: data.id,
+            ...data, // Include other fields from Supabase data
+            startTime: formattedStartTime,
+            endTime: formattedEndTime,
           });
         }
       });
-  
-      setItinerariesList(finalData);
 
-    }
-    catch (error) {
-      console.error('Error fetching data:', error);
+      setItinerariesList(finalData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
     }
 
     return;
-  }
-
+  };
 
   const fetchTabs = async () => {
     setLoading(true);
     try {
       if (hasRun.current === false) {
-        const { data: itinerariesDates, error } = await supabase.rpc('get_distinct_start_dates');
+        const { data: itinerariesDates, error } = await supabase.rpc(
+          "get_distinct_start_dates"
+        );
 
         if (error) {
-          console.error('Error fetching distinct dates:', error);
+          console.error("Error fetching distinct dates:", error);
           return;
         }
 
-        const dataDatesOut = itinerariesDates.map((record) => { return record['distinct_date'] });
+        const dataDatesOut = itinerariesDates.map((record) => {
+          return record["distinct_date"];
+        });
         setDataDates(dataDatesOut);
         const dayList = Array.from(
           { length: dataDatesOut.length },
@@ -454,7 +467,6 @@ const ItineraryScreen = () => {
 
         await fetchData(dataDatesOut, 0);
         hasRun.current = true;
-
       } else {
         console.log("secondary runs");
         let tabIndex = tabNames.indexOf(activeTab);
@@ -511,144 +523,6 @@ const ItineraryScreen = () => {
       ))}
     </View>
   );
-
-  // Sample data structure
-  const dayData = {
-    "Day 1": [
-      {
-        title: "Morning",
-        events: [
-          {
-            startTime: "10 am",
-            endTime: "10:45 am",
-            title: "Address by District Governor Elect",
-            type: "Training Session",
-            venue: "Grand Hall",
-            image: require("../../../assets/images/rotary_logo.png"),
-            description:
-              "Kicking off a splendid day, DGE Rtn. Vinod Sarogi will set the tone for the magical training sessions to come with immense value, fun and frolic.An inspirational talk about his experience and journey with Rotary kindling the spirit of all gathered magical secretaries",
-          },
-          {
-            startTime: "10:45 am",
-            endTime: "5:45 pm",
-            title: "Fun Visit to the Mysore Zoo",
-            type: "Leisure",
-            venue: "Mysore Zoo",
-            image: require("../../../assets/images/rotary_logo.png"),
-          },
-        ],
-      },
-      {
-        title: "Afternoon",
-        events: [
-          {
-            startTime: "10 am",
-            endTime: "10:45 am",
-            title: "Address by District Governor Elect",
-            type: "Training Session",
-            venue: "Grand Hall",
-            image: require("../../../assets/images/rotary_logo.png"),
-          },
-          {
-            startTime: "10:45 am",
-            endTime: "5:45 pm",
-            title: "Fun Visit to the Mysore Zoo",
-            type: "Leisure",
-            venue: "Mysore Zoo",
-            image: require("../../../assets/images/rotary_logo.png"),
-          },
-        ],
-      },
-    ],
-    "Day 2": [
-      {
-        title: "Morning",
-        events: [
-          {
-            startTime: "10 am",
-            endTime: "10:45 am",
-            title: "Address by SETS Chairman",
-            type: "Training Session",
-            venue: "Grand Hall",
-            image: require("../../../assets/images/rotary_logo.png"),
-          },
-          {
-            startTime: "10:45 am",
-            endTime: "5:45 pm",
-            title: "Fun Visit to the Mysore Zoo",
-            type: "Leisure",
-            venue: "Mysore Zoo",
-            image: require("../../../assets/images/rotary_logo.png"),
-          },
-        ],
-      },
-      {
-        title: "Afternoon",
-        events: [
-          {
-            startTime: "10 am",
-            endTime: "10:45 am",
-            title: "Address by District Governor Elect",
-            type: "Training Session",
-            venue: "Grand Hall",
-            image: require("../../../assets/images/rotary_logo.png"),
-          },
-          {
-            startTime: "10:45 am",
-            endTime: "5:45 pm",
-            title: "Fun Visit to the Mysore Zoo",
-            type: "Leisure",
-            venue: "Mysore Zoo",
-            image: require("../../../assets/images/rotary_logo.png"),
-          },
-        ],
-      },
-    ],
-    "Day 3": [
-      {
-        title: "Morning",
-        events: [
-          {
-            startTime: "10 am",
-            endTime: "10:45 am",
-            title: "Address by District Governor Elect",
-            type: "Training Session",
-            venue: "Grand Hall",
-            image: require("../../../assets/images/rotary_logo.png"),
-          },
-          {
-            startTime: "10:45 am",
-            endTime: "5:45 pm",
-            title: "Fun Visit to the Mysore Zoo",
-            type: "Leisure",
-            venue: "Mysore Zoo",
-            image: require("../../../assets/images/rotary_logo.png"),
-          },
-        ],
-      },
-      {
-        title: "Afternoon",
-        events: [
-          {
-            startTime: "10 am",
-            endTime: "10:45 am",
-            title: "Address by District Governor Elect",
-            type: "Training Session",
-            venue: "Grand Hall",
-            image: require("../../../assets/images/rotary_logo.png"),
-          },
-          {
-            startTime: "10:45 am",
-            endTime: "5:45 pm",
-            title: "Fun Visit to the Mysore Zoo",
-            type: "Leisure",
-            venue: "Mysore Zoo",
-            image: require("../../../assets/images/rotary_logo.png"),
-          },
-        ],
-      },
-    ],
-  };
 
   const EventModal = () => {
     if (!selectedEvent) return null;

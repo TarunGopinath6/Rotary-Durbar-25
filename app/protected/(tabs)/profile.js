@@ -1,19 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Image } from "react-native";
 import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "expo-router";
 import { auth, db } from "@/firebaseConfig";
 
-
 export default function Profile() {
   const [loading, setLoading] = useState(true);
-  const [userData, setUserData] = useState({})
+  const [userData, setUserData] = useState({});
 
-    const router = useRouter();
-  
+  const router = useRouter();
 
   useEffect(() => {
-
     const checkUserStatus = async (user) => {
       setLoading(true);
       if (user) {
@@ -23,9 +20,8 @@ export default function Profile() {
 
           if (!userDoc.exists()) {
             router.replace("/");
-          }
-          else {
-            setUserData({id: userDoc.id, ...userDoc.data()})
+          } else {
+            setUserData({ id: userDoc.id, ...userDoc.data() });
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
@@ -42,9 +38,7 @@ export default function Profile() {
     });
 
     return unsubscribe;
-
   }, [router]);
-
 
   if (loading) {
     return (
@@ -56,42 +50,65 @@ export default function Profile() {
   }
 
   return (
-    <View style={styles.mainContainer}>
-      <Text style={styles.heading}>Profile</Text>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {Object.entries(userData).map(([key, value]) => (
-          <View key={key} style={styles.infoRow}>
-            <Text style={styles.infoKey}>{key}:</Text>
-            <Text>{value}</Text>
-          </View>
-        ))}
-      </ScrollView>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Image
+          source={require("../../../assets/images/mysore_palace.png")}
+          style={styles.headerImage}
+        />
+        <Text style={styles.headerText}>Profile</Text>
+      </View>
+
+      <View style={styles.listContainer}>
+        {/* <FlatList
+          data={support}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMember}
+          contentContainerStyle={{ paddingBottom: 20 }}
+        />*/}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  mainContainer: {
-    flexGrow: 1,
+  listContainer: {
+    padding: 15,
+    paddingTop: 25,
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: -25,
+    zIndex: 1,
+  },
+  container: {
     flex: 1,
-    padding: 16
+    backgroundColor: "#fff",
+    paddingBottom: 100,
   },
-  heading: {
-    fontSize: 24, // Adjust size for different levels of headings
-    fontWeight: 'bold', // Make it bold to distinguish as a heading
-    color: '#333', // Choose your desired color
-    textAlign: 'center', // Optional: Center align text
-    marginBottom: 16, // Optional: Add some spacing below the heading
-  },
-  scrollContainer: {
+  header: {
+    backgroundColor: "#A32638",
     paddingBottom: 20,
+    paddingTop: 0,
+    position: "relative",
+    height: 120,
+    justifyContent: "center",
+    zIndex: 0,
   },
-  infoRow: {
-    flexDirection: "row",
-    marginBottom: 10,
+  headerImage: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    padding: 0,
+    margin: 0,
+    resizeMode: "cover",
+    opacity: 0.28,
   },
-  infoKey: {
-    fontWeight: "bold",
-    marginRight: 5,
+  headerText: {
+    fontSize: 26,
+    padding: 10,
+    paddingHorizontal: 20,
+    color: "#FFBD1B",
+    fontFamily: "Inter_500Medium",
   },
 });
