@@ -11,7 +11,7 @@ import {
   Linking,
   ActivityIndicator,
   Alert,
-  StatusBar
+  StatusBar,
 } from "react-native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -119,6 +119,20 @@ export default function Index() {
       />
       <SafeAreaView style={styles.container}>
         <View style={styles.contentContainer}>
+          <View
+            style={{
+              flex: 1,
+              maxHeight: 200,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Image
+              source={require("../assets/images/adaptive-icon.png")}
+              style={styles.logo}
+            />
+          </View>
+
           <Text style={styles.title}>Sign in</Text>
 
           <View style={styles.loginPrompt}>
@@ -173,7 +187,7 @@ export default function Index() {
             )}
           </TouchableOpacity>
 
-          <View style={styles.dividerContainer}>
+          {/* <View style={styles.dividerContainer}>
             <View style={styles.divider} />
             <Text style={styles.dividerText}>or sign up with</Text>
             <View style={styles.divider} />
@@ -205,7 +219,7 @@ export default function Index() {
               />
               <Text style={{ textAlign: "center" }}>Sign in with Google</Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
 
           <Text style={styles.termsText}>
             By clicking Continue you agree to the {"\n"}
@@ -218,6 +232,12 @@ export default function Index() {
   );
 }
 const styles = StyleSheet.create({
+  logo: {
+    width: "100%",
+    maxWidth: 150,
+    maxHeight: 150,
+    resizeMode: "contain",
+  },
   container: {
     flex: 1,
     backgroundColor: "#FFFFF0", // Ivory white from your palette
