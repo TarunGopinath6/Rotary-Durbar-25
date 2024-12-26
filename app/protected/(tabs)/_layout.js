@@ -422,6 +422,7 @@ const _layout = () => {
   const segments = useSegments();
 
   const [userData, setUserData] = useState({});
+  const [headerData, setHeaderData] = useState({})
 
   const getBottomPadding = () => {
     if (Platform.OS === "ios") {
@@ -438,13 +439,19 @@ const _layout = () => {
       if (user) {
         try {
           // Fetch the user data from the 'members' table using the user's ID
-          const { data: userDoc, error } = await supabase
+          const { data: userDoc, error: errorUserDoc } = await supabase
             .from("members")
             .select("*")
             .eq("id", user.uid) // Replace 'id' with your primary key in the 'members' table
             .single();
 
-          if (error || !userDoc) {
+          const { data: headerDoc, error: errorHeaderDoc } = await supabase
+            .from("internal")
+            .select("*")
+            .eq('active', true)
+            .single();
+
+          if (errorUserDoc || errorHeaderDoc || !userDoc ) {
             console.error(
               "Error fetching user data or user does not exist:",
               error
@@ -452,6 +459,7 @@ const _layout = () => {
             router.replace("/"); // Redirect to home if user does not exist
           } else {
             setUserData({ id: userDoc.id, ...userDoc });
+            setHeaderData(headerDoc);
             console.log(userDoc.name);
           }
         } catch (error) {
@@ -471,7 +479,7 @@ const _layout = () => {
   }, [router, segments]);
 
   return (
-    <AppContext.Provider value={{ userData, setUserData }}>
+    <AppContext.Provider value={{ userData, setUserData, headerData }}>
       <Tabs
         screenOptions={({ route }) => ({
           headerShown: false,

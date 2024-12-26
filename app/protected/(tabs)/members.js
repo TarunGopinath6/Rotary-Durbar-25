@@ -57,12 +57,14 @@ const DirectoryScreen = () => {
     let query = supabase
       .from("members")
       .select("*")
+      .eq('support', false)
+      .eq('role', 'member')
       .order("name", { ascending: true }) // Adjust the column for sorting as needed
       .range(offset, offset + PAGE_SIZE - 1);
 
     if (queryText) {
       query = query.or(
-        `name.ilike.%${queryText}%,company_name.ilike.%${queryText}%,club_name.ilike.%${queryText}%`
+        `name.ilike.%${queryText}%,type_of_business.ilike.%${queryText}%,club_name.ilike.%${queryText}%`
       );
     }
 
@@ -431,7 +433,7 @@ const DirectoryScreen = () => {
                 {selectedMember.phone && selectedMember.phone !== "NA" && (
                   <TouchableOpacity
                     style={styles.iconButton}
-                    onPress={() => handleCall(selectedMember.phone)}
+                    onPress={() => handleCall(parseInt(selectedMember.phone))}
                   >
                     <Ionicons name="call" size={24} color="#A32638" />
                   </TouchableOpacity>
@@ -463,7 +465,7 @@ const DirectoryScreen = () => {
                     style={styles.emergencyButton}
                     onPress={() =>
                       handleCall(
-                        parseFloat(selectedMember.emergency_contact_phone)
+                        parseInt(selectedMember.emergency_contact_phone)
                       )
                     }
                   >
@@ -678,7 +680,7 @@ const DirectoryScreen = () => {
                         <View style={styles.infoRow}>
                           <Ionicons name="call" size={20} color="#A32638" />
                           <Text style={styles.infoText}>
-                            {selectedMember.emergency_contact_phone}
+                            {parseInt(selectedMember.emergency_contact_phone)}
                           </Text>
                         </View>
                       )}

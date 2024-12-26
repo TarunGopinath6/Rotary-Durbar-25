@@ -35,7 +35,7 @@ const App = () => {
   const [posts, setPosts] = useState([]);
   const [notifs, setNotifs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { userData, setUserData } = useContext(AppContext);
+  const { userData, setUserData, headerData } = useContext(AppContext);
   const [refresh, setRefresh] = useState(null);
 
   let [fontsLoaded] = useFonts({
@@ -84,7 +84,11 @@ const App = () => {
 
   const [activePostId, setActivePostId] = useState(null); // Track the active post for overlay
   const lastPress = useRef(0);
-  const handleDoublePress = (postId, userId) => {
+  const handleDoublePress = (userId, postId, user_has_liked) => {
+
+    if (user_has_liked)
+      return;
+
     const currentTime = Date.now();
     const timeDifference = currentTime - lastPress.current;
 
@@ -176,10 +180,10 @@ const App = () => {
             style={styles.headerImage}
           />
           <Text style={styles.headerText}>
-            Hi, Rtn. {userData?.name ?? "NA"}!
+            Hi, {userData?.name ?? "NA"}!
           </Text>
-          <Text style={styles.headerSubText}>preSETS I</Text>
-          <Text style={styles.headerDate}>January 11th, 2025</Text>
+          <Text style={styles.headerSubText}>{headerData?.event_name ?? "Event"}</Text>
+          <Text style={styles.headerDate}>{headerData?.date_string ?? ""}</Text>
         </View>
 
         {/* Rotary Logos */}
@@ -195,8 +199,18 @@ const App = () => {
           />
         </View>
 
+        {loading === true &&
+          <View style={styles.loadingContainer}>
+            <Image
+              source={require("../../../assets/images/cheer_icon.png")}
+              style={styles.overlayImage}
+            />
+            <Text style={{ margin: "10px" }}>Loading...</Text>
+          </View>
+        }
+
         {/* Durbar Drum Section */}
-        <View style={styles.drumContainer}>
+        {notifs.length > 0 && <View style={styles.drumContainer}>
           <Text style={styles.drumHeader}>The Durbar Drum</Text>
           <ScrollView
             contentContainerStyle={styles.scrollContent}
@@ -209,10 +223,10 @@ const App = () => {
               </View>
             ))}
           </ScrollView>
-        </View>
+        </View>}
 
         {/* Tabs */}
-        <View style={styles.tabsContainer}>
+        {filteredPosts.length > 0 && <View style={styles.tabsContainer}>
           {["All Posts", "Images", "Links"].map((tab) => (
             <TouchableOpacity
               key={tab}
@@ -229,15 +243,13 @@ const App = () => {
               </Text>
             </TouchableOpacity>
           ))}
-        </View>
-
-        {loading === true && "Loading..."}
+        </View>}
 
         {filteredPosts.map((item, index) => (
           <TouchableOpacity
             style={styles.postContainer}
             key={index}
-            onPress={() => handleDoublePress(item.post_id, item.user_id)}
+            onPress={() => handleDoublePress(userData.id, item.post_id, item.user_has_liked)}
           >
             <Text style={styles.postText}>{item.text}</Text>
             {item.image && (
@@ -258,7 +270,7 @@ const App = () => {
                   style={styles.cheerIcon}
                 />
                 <Text style={styles.cheersText}>{item.likes_count} cheers</Text>
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   title="Like"
                   onPress={() => likePost(userData.id, item.post_id)}
                 />
@@ -266,7 +278,7 @@ const App = () => {
                   title="Remove Like"
                   onPress={() => unlikePost(userData.id, item.post_id)}
                 />
-                {item.user_has_liked === true && "LIKED"}
+                <Text>{item.user_has_liked === true && "LIKED"}</Text> */}
                 {/* <Text>{item.post_id}</Text> */}
               </View>
               <Text style={styles.eventText}>{item.event}</Text>
@@ -510,6 +522,13 @@ const styles = StyleSheet.create({
   timestamp: {
     fontSize: 13,
     color: "#999",
+  },
+  loadingContainer: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255, 0.5)", // Slight transparent overlay
+    borderRadius: 30,
   },
 });
 

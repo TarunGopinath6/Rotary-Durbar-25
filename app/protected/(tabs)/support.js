@@ -112,15 +112,7 @@ export default function Support() {
           // Return only the required fields along with the document ID
           return {
             id: doc.id,
-            name: docData.name,
-            sets_designation: docData.sets_designation,
-            designation: docData.designation,
-            affiliation: docData.affiliation,
-            // photograph: docData.photograph,
-            club_name: docData.club_name,
-            business_address: docData.business_address,
-            email: docData.email,
-            phone: docData.phone,
+            ...doc.data()
           };
         });
 
@@ -145,171 +137,6 @@ export default function Support() {
       return;
     }
     fetchSupport(lastVisibleDoc);
-  };
-
-  const addRandomSupport = async () => {
-    setLoading(true);
-
-    const randomName = `User_${Math.floor(Math.random() * 1000)}`;
-    const randomAffiliation = `Affiliation_${Math.floor(Math.random() * 100)}`;
-    const randomDesignation = `Committee/Doctor of ${Math.floor(
-      Math.random() * 100
-    )}`;
-    const randomSpouse = `Spouse_${Math.floor(Math.random() * 100)}`;
-    const randomPhone = `+1-${Math.floor(Math.random() * 1000000000)}`;
-    const randomEmail = `${randomName}@app.com`;
-    const randomAddress = `Address ${Math.floor(Math.random() * 1000)}`;
-    const randomCompanyName = `Company_${Math.floor(Math.random() * 100)}`;
-    const randomCompanySector = `Sector_${Math.floor(Math.random() * 10)}`;
-    const randomCompanyDescription = `Description of ${randomCompanyName}`;
-    const randomCompanyEmail = `${randomCompanyName}@company.com`;
-    const randomCompanyAddress = `Company Address ${Math.floor(
-      Math.random() * 100
-    )}`;
-    const randomMemberSince = new Date().toISOString();
-    const randomDateOfBirth = new Date(
-      1980 + Math.floor(Math.random() * 40),
-      Math.floor(Math.random() * 12),
-      Math.floor(Math.random() * 28)
-    ).toISOString();
-
-    try {
-      // Create user in Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        randomEmail,
-        randomName
-      );
-      const user = userCredential.user;
-
-      // Now, add the user details to Firestore
-      const userRef = doc(db, "users", user.uid);
-      await setDoc(userRef, {
-        name: randomName,
-        role: "member",
-        support: true,
-        affiliation: randomAffiliation,
-        designation: randomDesignation,
-        spouse: randomSpouse,
-        support_since: randomMemberSince,
-        date_of_birth: randomDateOfBirth,
-        phone: randomPhone,
-        email: randomEmail,
-        address: randomAddress,
-        company_name: randomCompanyName,
-        company_sector: randomCompanySector,
-        company_description: randomCompanyDescription,
-        company_email: randomCompanyEmail,
-        company_address: randomCompanyAddress,
-      });
-
-      console.log("Random support added:", randomName);
-      fetchSupport(null, true);
-    } catch (error) {
-      console.error("Error adding random support:", error);
-    }
-    setLoading(false);
-  };
-
-  const updateSupport = async (id) => {
-    setLoading(true);
-
-    const randomDesignation = `Committee/Doctor of ${Math.floor(
-      Math.random() * 100
-    )}`;
-    try {
-      const supportDoc = doc(db, "users", id);
-      await updateDoc(supportDoc, { designation: randomDesignation });
-      fetchSupport(null, true);
-    } catch (error) {
-      console.error("Error updating support:", error);
-    }
-
-    setLoading(false);
-  };
-
-  const deleteSupport = async (id) => {
-    setLoading(true);
-
-    try {
-      const supportDoc = doc(db, "users", id);
-      await deleteDoc(supportDoc);
-
-      fetchSupport(null, true);
-    } catch (error) {
-      console.error("Error deleting support:", error);
-    }
-
-    setLoading(false);
-  };
-
-  const showMoreInfo = async (id) => {
-    setLoading(true);
-    try {
-      const userRef = doc(db, "users", id);
-      const userDoc = await getDoc(userRef);
-
-      if (userDoc.exists()) {
-        alert("Check console");
-        console.log(userDoc.data());
-      } else {
-        console.log("No such user!");
-      }
-    } catch (error) {
-      console.error("Error fetching user data: ", error);
-    }
-
-    setLoading(false);
-  };
-
-  const batchDeleteCollection = async () => {
-    const collectionPath = "users";
-    const batchSize = 500;
-
-    setLoading(true);
-
-    const collectionRef = collection(db, collectionPath);
-    const q = query(
-      collectionRef,
-      where("role", "not-in", ["admin"]),
-      where("support", "==", true),
-      orderBy("name", "asc")
-    );
-
-    let totalDeleted = 0;
-    let documentsToDelete = [];
-
-    try {
-      // Get all documents in the collection
-      const querySnapshot = await getDocs(q);
-
-      // Create batches of document references to delete
-      for (const doc of querySnapshot.docs) {
-        documentsToDelete.push(doc.ref);
-
-        // When we reach the batch size, execute the batch delete
-        if (documentsToDelete.length === batchSize) {
-          await executeDelete(documentsToDelete);
-          totalDeleted += documentsToDelete.length;
-          documentsToDelete = [];
-        }
-      }
-
-      // Delete any remaining documents
-      if (documentsToDelete.length > 0) {
-        await executeDelete(documentsToDelete);
-        totalDeleted += documentsToDelete.length;
-      }
-
-      console.log(
-        `Successfully deleted ${totalDeleted} documents from ${collectionPath}`
-      );
-    } catch (error) {
-      console.error("Error deleting collection:", error);
-    }
-
-    setLoading(false);
-    fetchSupport(null, true);
   };
 
   const formatClubName = (name) => {
@@ -618,10 +445,10 @@ export default function Support() {
   const renderMember = ({ item }) => (
     <View style={styles.memberContainer}>
       <TouchableOpacity
-      // onPress={() => {
-      //   setSelectedmember(item);
-      //   setModalVisible(true);
-      // }}
+      onPress={() => {
+        setSelectedMember(item);
+        setModalVisible(true);
+      }}
       >
         <View style={styles.memberCard}>
           <View style={styles.memberContent}>
@@ -670,15 +497,7 @@ export default function Support() {
     </View>
   );
 
-  async function executeDelete(documentRefs) {
-    const batch = writeBatch(db);
 
-    documentRefs.forEach((docRef) => {
-      batch.delete(docRef);
-    });
-
-    await batch.commit();
-  }
 
   useEffect(() => {
     fetchSupport();
@@ -693,18 +512,6 @@ export default function Support() {
     );
   }
 
-  if (support.length === 0) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.heading}>Support</Text>
-        <View style={styles.buttonContainer}>
-          <Button title="Refresh" onPress={() => fetchSupport(null, true)} />
-          <Button title="Add Support" onPress={addRandomSupport} />
-        </View>
-        <Text>No support found.</Text>
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>

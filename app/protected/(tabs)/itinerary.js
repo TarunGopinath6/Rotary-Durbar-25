@@ -317,7 +317,7 @@
 
 // export default App;
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import {
   View,
   Text,
@@ -330,6 +330,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import moment from "moment";
+import { AppContext } from "./_layout";
 import {
   useFonts,
   Inter_100Thin,
@@ -353,6 +354,8 @@ const ItineraryScreen = () => {
   const [tabNames, setTabNames] = useState([]);
   const [dataDates, setDataDates] = useState([]);
   const [itinerariesList, setItinerariesList] = useState([]);
+
+  const { headerData } = useContext(AppContext);
 
   const hasRun = useRef(false);
 
@@ -568,7 +571,7 @@ const ItineraryScreen = () => {
         />
         <View style={styles.headerContent}>
           <Text style={styles.headerText}>The Itinerary</Text>
-          <Text style={styles.headerSubText}>preSETS I</Text>
+          <Text style={styles.headerSubText}>{headerData?.event_name ?? "Event"}</Text>
         </View>
       </View>
 
