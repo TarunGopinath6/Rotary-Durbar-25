@@ -422,7 +422,7 @@ const _layout = () => {
   const segments = useSegments();
 
   const [userData, setUserData] = useState({});
-  const [headerData, setHeaderData] = useState({})
+  const [headerData, setHeaderData] = useState({});
 
   const getBottomPadding = () => {
     if (Platform.OS === "ios") {
@@ -448,10 +448,10 @@ const _layout = () => {
           const { data: headerDoc, error: errorHeaderDoc } = await supabase
             .from("internal")
             .select("*")
-            .eq('active', true)
+            .eq("active", true)
             .single();
 
-          if (errorUserDoc || errorHeaderDoc || !userDoc ) {
+          if (errorUserDoc || errorHeaderDoc || !userDoc) {
             console.error(
               "Error fetching user data or user does not exist:",
               error

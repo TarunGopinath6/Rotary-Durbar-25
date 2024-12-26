@@ -85,9 +85,7 @@ const App = () => {
   const [activePostId, setActivePostId] = useState(null); // Track the active post for overlay
   const lastPress = useRef(0);
   const handleDoublePress = (userId, postId, user_has_liked) => {
-
-    if (user_has_liked)
-      return;
+    if (user_has_liked) return;
 
     const currentTime = Date.now();
     const timeDifference = currentTime - lastPress.current;
@@ -179,10 +177,10 @@ const App = () => {
             source={require("../../../assets/images/mysore_palace.png")}
             style={styles.headerImage}
           />
-          <Text style={styles.headerText}>
-            Hi, {userData?.name ?? "NA"}!
+          <Text style={styles.headerText}>Hi, {userData?.name ?? "NA"}!</Text>
+          <Text style={styles.headerSubText}>
+            {headerData?.event_name ?? "Event"}
           </Text>
-          <Text style={styles.headerSubText}>{headerData?.event_name ?? "Event"}</Text>
           <Text style={styles.headerDate}>{headerData?.date_string ?? ""}</Text>
         </View>
 
@@ -194,12 +192,12 @@ const App = () => {
           />
           <Text style={styles.logoText}>District 3234</Text>
           <Image
-            source={require("../../../assets/images/rotary_slogan.jpg")}
+            source={require("../../../assets/images/splash-icon.png")}
             style={styles.logo}
           />
         </View>
 
-        {loading === true &&
+        {loading === true && (
           <View style={styles.loadingContainer}>
             <Image
               source={require("../../../assets/images/cheer_icon.png")}
@@ -207,49 +205,55 @@ const App = () => {
             />
             <Text style={{ margin: "10px" }}>Loading...</Text>
           </View>
-        }
+        )}
 
         {/* Durbar Drum Section */}
-        {notifs.length > 0 && <View style={styles.drumContainer}>
-          <Text style={styles.drumHeader}>The Durbar Drum</Text>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            nestedScrollEnabled
-          >
-            {notifs.map((record, index) => (
-              <View key={index} style={styles.bulletPointContainer}>
-                <Text style={styles.bulletSymbol}>•</Text>
-                <Text style={styles.bulletText}>{record.data}</Text>
-              </View>
-            ))}
-          </ScrollView>
-        </View>}
+        {notifs.length > 0 && (
+          <View style={styles.drumContainer}>
+            <Text style={styles.drumHeader}>The Durbar Drum</Text>
+            <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              nestedScrollEnabled
+            >
+              {notifs.map((record, index) => (
+                <View key={index} style={styles.bulletPointContainer}>
+                  <Text style={styles.bulletSymbol}>•</Text>
+                  <Text style={styles.bulletText}>{record.data}</Text>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Tabs */}
-        {filteredPosts.length > 0 && <View style={styles.tabsContainer}>
-          {["All Posts", "Images", "Links"].map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tab, activeTab === tab && styles.activeTab]}
-              onPress={() => setActiveTab(tab)}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === tab && styles.activeTabText,
-                ]}
+        {filteredPosts.length > 0 && (
+          <View style={styles.tabsContainer}>
+            {["All Posts", "Images", "Links"].map((tab) => (
+              <TouchableOpacity
+                key={tab}
+                style={[styles.tab, activeTab === tab && styles.activeTab]}
+                onPress={() => setActiveTab(tab)}
               >
-                {tab}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>}
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === tab && styles.activeTabText,
+                  ]}
+                >
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {filteredPosts.map((item, index) => (
           <TouchableOpacity
             style={styles.postContainer}
             key={index}
-            onPress={() => handleDoublePress(userData.id, item.post_id, item.user_has_liked)}
+            onPress={() =>
+              handleDoublePress(userData.id, item.post_id, item.user_has_liked)
+            }
           >
             <Text style={styles.postText}>{item.text}</Text>
             {item.image && (
@@ -387,10 +391,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 30,
     marginTop: -25,
     zIndex: 1,
+    padding: 10,
   },
   logo: {
-    width: 110,
-    height: 110,
+    width: 80,
+    height: 80,
     resizeMode: "contain",
   },
   logoText: {
