@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
   View,
@@ -18,6 +18,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/firebaseConfig";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import supabase from "@/supabase.js";
 // import { StatusBar } from "react-native";
 
 export default function Index() {
@@ -25,6 +26,51 @@ export default function Index() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+
+  useEffect(() => {
+    const checkUserStatus = async (user) => {
+      if (user) {
+        try {
+          // Fetch the user data from the 'members' table using the user's ID
+          const { data: userDoc, error: errorUserDoc } = await supabase
+            .from("members")
+            .select("*")
+            .eq("id", user.uid) // Replace 'id' with your primary key in the 'members' table
+            .single();
+
+          const { data: headerDoc, error: errorHeaderDoc } = await supabase
+            .from("internal")
+            .select("*")
+            .eq("active", true)
+            .single();
+
+          if (errorUserDoc || errorHeaderDoc || !userDoc) {
+            console.error(
+              "Error fetching user data or user does not exist:",
+              error
+            );
+            // router.replace("/"); // Redirect to home if user does not exist
+          } else {
+            //setUserData({ id: userDoc.id, ...userDoc });
+            //setHeaderData(headerDoc);
+            router.replace('/protected/(tabs)')       
+          }
+        } catch (error) {
+          console.error("Unexpected error:", error);
+          //router.replace("/"); // Redirect to home if an unexpected error occurs
+        }
+      } else {
+        //router.replace("/"); // Redirect to home if no user is logged in
+      }
+    };
+
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      checkUserStatus(user);
+    });
+
+    return unsubscribe;
+  }, [router]);
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
