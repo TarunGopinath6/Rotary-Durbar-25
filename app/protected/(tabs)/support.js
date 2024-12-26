@@ -5,26 +5,23 @@ import {
   FlatList,
   StyleSheet,
   Button,
+  TextInput,
   Image,
   TouchableOpacity,
   Linking,
   Platform,
+  Modal,
+  ScrollView,
+  ActivityIndicator
 } from "react-native";
-import { createUserWithEmailAndPassword } from "firebase/auth";
 import {
   collection,
   getDocs,
-  setDoc,
-  getDoc,
-  doc,
-  updateDoc,
-  deleteDoc,
   query,
   orderBy,
   limit,
   startAfter,
   where,
-  writeBatch,
 } from "firebase/firestore";
 
 import {
@@ -41,14 +38,17 @@ import {
 } from "@expo-google-fonts/inter";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
-import { db, auth } from "@/firebaseConfig";
+import { db } from "@/firebaseConfig";
+import supabase from "@/supabase.js";
+
 
 export default function Support() {
   const [support, setSupport] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [lastVisibleDoc, setLastVisibleDoc] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const PAGE_SIZE = 10;
 
@@ -64,80 +64,49 @@ export default function Support() {
     Inter_900Black,
   });
 
-  const fetchSupport = async (startDoc = null, reset = false) => {
+  const fetchMembers = async (queryText = "") => {
+    let query = supabase
+      .from("members")
+      .select("*")
+      .eq('support', true)
+      .eq('role', 'member')
+      .order("priority", { descending: true });
+
+    if (queryText) {
+      query = query.or(
+        `name.ilike.%${queryText}%,sets_designation.ilike.%${queryText}%,club_name.ilike.%${queryText}%`
+      );
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Error fetching members:", error);
+      return [];
+    }
+    return data;
+  };
+
+  const loadMembers = async (queryText = "") => {
+    if (loading) return; // Prevent multiple calls
     setLoading(true);
 
-    if (reset) {
-      setSupport([]);
-      setLastVisibleDoc(null);
-    }
+    console.log("searching", queryText);
+    let response = await fetchMembers(queryText);
+    setSupport(response);
 
-    try {
-      const supportRef = collection(db, "users");
-      let q = query(
-        supportRef,
-        where("role", "not-in", ["admin"]),
-        where("support", "==", true),
-        orderBy("name", "asc"),
-        limit(PAGE_SIZE)
-      );
-
-      if (startDoc) {
-        q = query(
-          supportRef,
-          where("role", "not-in", ["admin"]),
-          where("support", "==", true),
-          orderBy("name", "asc"),
-          startAfter(startDoc),
-          limit(PAGE_SIZE)
-        );
-      }
-
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.docs.length < PAGE_SIZE) {
-        setLastVisibleDoc(null); // No more documents to fetch
-      }
-
-      if (!querySnapshot.empty) {
-        const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-        // Update last visible document or null if no more documents
-        setLastVisibleDoc(
-          querySnapshot.docs.length < PAGE_SIZE ? null : lastDoc
-        );
-
-        const data = querySnapshot.docs.map((doc) => {
-          const docData = doc.data(); // Get the full document data
-
-          // Return only the required fields along with the document ID
-          return {
-            id: doc.id,
-            ...doc.data()
-          };
-        });
-
-        setSupport((prevSupport) => {
-          const newIds = new Set(prevSupport.map((item) => item.id));
-          const filteredData = data.filter((item) => !newIds.has(item.id));
-          return [...prevSupport, ...filteredData];
-        });
-      } else {
-        setLastVisibleDoc(null); // No more documents to fetch
-      }
-    } catch (error) {
-      console.error("Error fetching support:", error);
-    } finally {
-      setLoading(false);
-    }
+    setLoading(false);
   };
 
-  const loadMoreData = () => {
-    if (!lastVisibleDoc) {
-      console.log("No more data");
-      return;
-    }
-    fetchSupport(lastVisibleDoc);
-  };
+  useEffect(() => {
+    loadMembers();
+  }, []);
+
+  useEffect(() => {
+    // handleSearch(searchQuery);
+    loadMembers(searchQuery);
+  }, [searchQuery]);
+
 
   const formatClubName = (name) => {
     const words = name.split(" ");
@@ -167,7 +136,18 @@ export default function Support() {
       );
     });
   };
-
+  const formatDate = (timestamp) => {
+    if (!timestamp) return null; // Handle null or undefined values
+    if (typeof timestamp === "string" && timestamp.length < 6) {
+      return timestamp; // Return the value as is if its length is greater than 5
+    }
+    const date = new Date(timestamp);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+    return null;
+  };
   const MemberModal = () => {
     if (!selectedMember) return null;
     const InfoRow = ({ icon, text }) => (
@@ -191,13 +171,7 @@ export default function Support() {
       Linking.openURL(url);
     };
 
-    const handleCall = (phoneNumber) => {
-      Linking.openURL(`tel:${phoneNumber}`);
-    };
-
-    const handleEmail = (email) => {
-      Linking.openURL(`mailto:${email}`);
-    };
+    const clubName = formatClubName(selectedMember.club_name);
 
     return (
       <Modal
@@ -227,8 +201,10 @@ export default function Support() {
               />
               <Text style={styles.modalName}>{selectedMember.name}</Text>
               <View style={styles.clubNameContainer}>
-                <Text style={styles.modalClubName}>{clubName.firstLine}</Text>
-                {clubName.secondLine && (
+                {clubName.firstLine && (
+                  <Text style={styles.modalClubName}>{clubName.firstLine}</Text>
+                )}
+                {clubName.secondLine && clubName.secondLine !== "NA" && (
                   <Text style={styles.modalClubName}>
                     {clubName.secondLine}
                   </Text>
@@ -237,204 +213,327 @@ export default function Support() {
 
               <View style={styles.modalSeparator} />
 
-              <View style={styles.actionButtonsTop}>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={() => handleCall(selectedMember.phone)}
-                >
-                  <Ionicons name="call" size={24} color="#A32638" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={() => handleEmail(selectedMember.email)}
-                >
-                  <Ionicons name="mail" size={24} color="#A32638" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={() => handleMaps(selectedMember.business_address)}
-                >
-                  <Ionicons name="location" size={24} color="#A32638" />
-                </TouchableOpacity>
+              <View
+                style={[
+                  styles.actionButtonsTop,
+                  { textTransform: "capitalize" },
+                ]}
+              >
+                {selectedMember.phone && selectedMember.phone !== "NA" && (
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => handleCall(parseInt(selectedMember.phone))}
+                  >
+                    <Ionicons name="call" size={24} color="#A32638" />
+                  </TouchableOpacity>
+                )}
+                {selectedMember.email && selectedMember.email !== "NA" && (
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => handleEmail(selectedMember.email)}
+                  >
+                    <Ionicons name="mail" size={24} color="#A32638" />
+                  </TouchableOpacity>
+                )}
+                {selectedMember.business_address &&
+                  selectedMember.business_address !== "NA" && (
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      onPress={() =>
+                        handleMaps(selectedMember.business_address)
+                      }
+                    >
+                      <Ionicons name="location" size={24} color="#A32638" />
+                    </TouchableOpacity>
+                  )}
               </View>
 
-              <TouchableOpacity
-                style={styles.emergencyButton}
-                onPress={() =>
-                  handleCall(selectedMember.emergency_contact_phone)
-                }
-              >
-                <Text style={styles.emergencyText}>Emergency</Text>
-              </TouchableOpacity>
+              {selectedMember.emergency_contact_phone &&
+                selectedMember.emergency_contact_phone !== "NA" && (
+                  <TouchableOpacity
+                    style={styles.emergencyButton}
+                    onPress={() =>
+                      handleCall(
+                        parseInt(selectedMember.emergency_contact_phone)
+                      )
+                    }
+                  >
+                    <Text style={styles.emergencyText}>Emergency</Text>
+                  </TouchableOpacity>
+                )}
 
-              <Text style={styles.sectionTitle}>Rotary</Text>
+              {selectedMember.rotarian_since &&
+                selectedMember.rotarian_since !== "NA" && (
+                  <Text style={styles.sectionTitle}>Rotary</Text>
+                )}
               {/* Rotary Information */}
-              <View style={styles.infoSection}>
-                <View style={styles.infoRow}>
-                  <Image
-                    source={require("../../../assets/images/cheer_icon.png")}
-                    style={[styles.rotaryIcon, { tintColor: "#A32638" }]}
-                  />
-                  <Text style={styles.infoText}>
-                    {selectedMember.rotarian_since}
-                  </Text>
-                </View>
-                {selectedMember.rotary_foundation_title &&
-                  selectedMember.rotary_foundation_title !== "NA" && (
+              {selectedMember.rotarian_since &&
+                selectedMember.rotarian_since !== "NA" && (
+                  <View style={styles.infoSection}>
                     <View style={styles.infoRow}>
                       <Ionicons name="ribbon" size={20} color="#A32638" />
                       <Text style={styles.infoText}>
-                        {selectedMember.rotary_foundation_title}
+                        {selectedMember.affiliation}
                       </Text>
                     </View>
-                  )}
-              </View>
+                    
+                    <View style={styles.infoRow}>
+                      <Ionicons name="ribbon" size={20} color="#A32638" />
+                      <Text style={styles.infoText}>
+                        {selectedMember.sets_designation}
+                      </Text>
+                    </View>
+
+                    <View style={styles.infoRow}>
+                      <Image
+                        source={require("../../../assets/images/cheer_icon.png")}
+                        style={[styles.rotaryIcon, { tintColor: "#A32638" }]}
+                      />
+                      <Text style={styles.infoText}>
+                        {selectedMember.rotarian_since}
+                      </Text>
+                    </View>
+                    {selectedMember.rotary_foundation_title &&
+                      selectedMember.rotary_foundation_title !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons name="ribbon" size={20} color="#A32638" />
+                          <Text style={styles.infoText}>
+                            {selectedMember.rotary_foundation_title}
+                          </Text>
+                        </View>
+                      )}
+                  </View>
+                )}
 
               <View style={styles.sectionSeparator} />
 
               {/* Business Information */}
-              <Text style={styles.sectionTitle}>Business</Text>
-              <View style={styles.infoSection}>
-                <View style={styles.infoRow}>
-                  <Ionicons name="business" size={20} color="#A32638" />
-                  <Text
-                    style={[
-                      styles.infoText,
-                      { fontFamily: "Inter_600SemiBold" },
-                    ]}
-                  >
-                    {selectedMember.company_name}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="person-circle" size={20} color="#fff" />
-                  <Text
-                    style={[
-                      styles.infoText,
-                      { fontFamily: "Inter_600SemiBold" },
-                    ]}
-                  >
-                    {selectedMember.designation}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="briefcase" size={20} color="#fff" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.type_of_business}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="layers" size={20} color="#fff" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.company_sector}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="information-circle" size={20} color="#fff" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.about_your_business}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="location" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.business_address}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.infoRow}
-                  onPress={() => handleWebsite(selectedMember.business_website)}
-                >
-                  <Ionicons name="globe" size={20} color="#A32638" />
-                  <Text style={[styles.infoText, styles.linkText]}>
-                    {selectedMember.business_website}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              {selectedMember.company_name &&
+                selectedMember.company_name !== "NA" && (
+                  <Text style={styles.sectionTitle}>Business</Text>
+                )}
+              {selectedMember.company_name &&
+                selectedMember.company_name !== "NA" && (
+                  <View style={styles.infoSection}>
+                    <View style={styles.infoRow}>
+                      <Ionicons name="business" size={20} color="#A32638" />
+                      <Text
+                        style={[
+                          styles.infoText,
+                          { fontFamily: "Inter_600SemiBold" },
+                        ]}
+                      >
+                        {selectedMember.company_name}
+                      </Text>
+                    </View>
+                    {selectedMember.designation &&
+                      selectedMember.designation !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons
+                            name="person-circle"
+                            size={20}
+                            color="#fff"
+                          />
+                          <Text
+                            style={[
+                              styles.infoText,
+                              { fontFamily: "Inter_600SemiBold" },
+                            ]}
+                          >
+                            {selectedMember.designation}
+                          </Text>
+                        </View>
+                      )}
+                    {selectedMember.type_of_business &&
+                      selectedMember.type_of_business !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons name="briefcase" size={20} color="#fff" />
+                          <Text style={styles.infoText}>
+                            {selectedMember.type_of_business}
+                          </Text>
+                        </View>
+                      )}
+                    {selectedMember.company_sector &&
+                      selectedMember.company_sector !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons name="layers" size={20} color="#fff" />
+                          <Text style={styles.infoText}>
+                            {selectedMember.company_sector}
+                          </Text>
+                        </View>
+                      )}
+                    {selectedMember.about_your_business &&
+                      selectedMember.about_your_business !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons
+                            name="information-circle"
+                            size={20}
+                            color="#fff"
+                          />
+                          <Text style={styles.infoText}>
+                            {selectedMember.about_your_business}
+                          </Text>
+                        </View>
+                      )}
+                    {selectedMember.business_address &&
+                      selectedMember.business_address !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons name="location" size={20} color="#A32638" />
+                          <Text style={styles.infoText}>
+                            {selectedMember.business_address}
+                          </Text>
+                        </View>
+                      )}
+                    {selectedMember.business_website &&
+                      selectedMember.business_website !== "NA" && (
+                        <TouchableOpacity
+                          style={styles.infoRow}
+                          onPress={() =>
+                            handleWebsite(selectedMember.business_website)
+                          }
+                        >
+                          <Ionicons name="globe" size={20} color="#A32638" />
+                          <Text style={[styles.infoText, styles.linkText]}>
+                            {selectedMember.business_website}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                  </View>
+                )}
 
               <View style={styles.sectionSeparator} />
 
               {/* Personal Information */}
-              <Text style={styles.sectionTitle}>Personal</Text>
-              <View style={styles.infoSection}>
-                <View style={styles.infoRow}>
-                  <Ionicons name="person" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>{selectedMember.sex}</Text>
+              {selectedMember.sex && selectedMember.sex !== "NA" && (
+                <Text style={styles.sectionTitle}>Personal</Text>
+              )}
+              {selectedMember.sex && selectedMember.sex !== "NA" && (
+                <View style={styles.infoSection}>
+                  <View style={styles.infoRow}>
+                    <Ionicons name="person" size={20} color="#A32638" />
+                    <Text style={styles.infoText}>{selectedMember.sex}</Text>
+                  </View>
+                  {selectedMember.spouses_name &&
+                    selectedMember.spouses_name !== "NA" && (
+                      <View style={styles.infoRow}>
+                        <Ionicons name="heart" size={20} color="#A32638" />
+                        <Text style={styles.infoText}>
+                          {selectedMember.spouses_name}
+                        </Text>
+                      </View>
+                    )}
+                  {selectedMember.wedding_anniversary &&
+                    selectedMember.wedding_anniversary !== "NA" && (
+                      <View style={styles.infoRow}>
+                        <Ionicons name="gift" size={20} color="#A32638" />
+                        <Text style={styles.infoText}>
+                          {formatDate(selectedMember.wedding_anniversary)}
+                        </Text>
+                      </View>
+                    )}
+                  {selectedMember.date_of_birth &&
+                    selectedMember.date_of_birth !== "NA" && (
+                      <View style={styles.infoRow}>
+                        <Ionicons name="calendar" size={20} color="#A32638" />
+                        <Text style={styles.infoText}>
+                          {formatDate(selectedMember.date_of_birth)}
+                        </Text>
+                      </View>
+                    )}
+                  {selectedMember.residential_address &&
+                    selectedMember.residential_address !== "NA" && (
+                      <View style={styles.infoRow}>
+                        <Ionicons name="home" size={20} color="#A32638" />
+                        <Text style={styles.infoText}>
+                          {selectedMember.residential_address}
+                        </Text>
+                      </View>
+                    )}
                 </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="heart" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.spouses_name}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="gift" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.wedding_anniversary}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="calendar" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {/* {selectedMember.date_of_birth} */}
-                    11/04/1974
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="home" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.residential_address}
-                  </Text>
-                </View>
-              </View>
+              )}
 
               <View style={styles.sectionSeparator} />
 
-              <Text style={styles.sectionTitle}>Emergency Contact</Text>
-              <View style={styles.infoSection}>
-                <View style={styles.infoRow}>
-                  <Ionicons name="alert-circle" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.emergency_contact_name}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="people" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.emergency_contact_relationship}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="call" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.emergency_contact_phone}
-                  </Text>
-                </View>
-              </View>
+              {/* Emergency Contact */}
+              {selectedMember.emergency_contact_name &&
+                selectedMember.emergency_contact_name !== "NA" && (
+                  <Text style={styles.sectionTitle}>Emergency Contact</Text>
+                )}
+              {selectedMember.emergency_contact_name &&
+                selectedMember.emergency_contact_name !== "NA" && (
+                  <View style={styles.infoSection}>
+                    <View style={styles.infoRow}>
+                      <Ionicons name="alert-circle" size={20} color="#A32638" />
+                      <Text style={styles.infoText}>
+                        {selectedMember.emergency_contact_name}
+                      </Text>
+                    </View>
+                    {selectedMember.emergency_contact_relationship &&
+                      selectedMember.emergency_contact_relationship !==
+                      "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons name="people" size={20} color="#A32638" />
+                          <Text style={styles.infoText}>
+                            {selectedMember.emergency_contact_relationship}
+                          </Text>
+                        </View>
+                      )}
+                    {selectedMember.emergency_contact_phone &&
+                      selectedMember.emergency_contact_phone !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons name="call" size={20} color="#A32638" />
+                          <Text style={styles.infoText}>
+                            {parseInt(selectedMember.emergency_contact_phone)}
+                          </Text>
+                        </View>
+                      )}
+                  </View>
+                )}
 
               <View style={styles.sectionSeparator} />
 
-              <Text style={styles.sectionTitle}>Preferences</Text>
-              <View style={styles.infoSection}>
-                <View style={styles.infoRow}>
-                  <Ionicons name="shirt" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.shirt_size}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="shirt-outline" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.t_shirt_size}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Ionicons name="restaurant" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {selectedMember.meal_preference}
-                  </Text>
-                </View>
-              </View>
+              {/* Preferences */}
+              {selectedMember.shirt_size &&
+                selectedMember.shirt_size !== "NA" && (
+                  <Text style={styles.sectionTitle}>Preferences</Text>
+                )}
+              {selectedMember.shirt_size &&
+                selectedMember.shirt_size !== "NA" && (
+                  <View style={styles.infoSection}>
+                    <View style={styles.infoRow}>
+                      <Ionicons name="shirt" size={20} color="#A32638" />
+                      <Text style={styles.infoText}>
+                        {selectedMember.shirt_size}
+                      </Text>
+                    </View>
+                    {selectedMember.t_shirt_size &&
+                      selectedMember.t_shirt_size !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons
+                            name="shirt-outline"
+                            size={20}
+                            color="#A32638"
+                          />
+                          <Text style={styles.infoText}>
+                            {selectedMember.t_shirt_size}
+                          </Text>
+                        </View>
+                      )}
+                    {selectedMember.meal_preference &&
+                      selectedMember.meal_preference !== "NA" && (
+                        <View style={styles.infoRow}>
+                          <Ionicons
+                            name="restaurant"
+                            size={20}
+                            color="#A32638"
+                          />
+                          <Text style={styles.infoText}>
+                            {selectedMember.meal_preference}
+                          </Text>
+                        </View>
+                      )}
+                  </View>
+                )}
             </ScrollView>
           </View>
         </View>
@@ -442,14 +541,17 @@ export default function Support() {
     );
   };
 
+
   const renderMember = ({ item }) => (
-    <View style={styles.memberContainer}>
+    <View style={styles.container}>
       <TouchableOpacity
-      onPress={() => {
-        setSelectedMember(item);
-        setModalVisible(true);
-      }}
+        onPress={() => {
+          setSelectedMember(item);
+          setModalVisible(true);
+          console.log(item, modalVisible)
+        }}
       >
+        <MemberModal />
         <View style={styles.memberCard}>
           <View style={styles.memberContent}>
             <View style={styles.memberInfo}>
@@ -497,22 +599,6 @@ export default function Support() {
     </View>
   );
 
-
-
-  useEffect(() => {
-    fetchSupport();
-  }, []);
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.heading}>Support</Text>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
-
-
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -524,49 +610,34 @@ export default function Support() {
         <Text style={styles.headerText}>SETS Team</Text>
       </View>
 
-      {/* <View style={styles.buttonContainer}>
-        <Button title="Refresh" onPress={() => fetchSupport(null, true)} />
-        <Button title="Add Support" onPress={addRandomSupport} />
-        <Button
-          title="Delete All"
-          onPress={batchDeleteCollection}
-          color="red"
-        />
-      </View> */}
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBox}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search a name, club or business"
+            placeholderTextColor="#666"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
+        <TouchableOpacity style={styles.filterButton}>
+          <Text style={styles.filterButtonText}>Filter</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.listContainer}>
         <FlatList
           data={support}
           keyExtractor={(item) => item.id}
-          // renderItem={({ item }) => (
-          //   <View style={styles.card}>
-          //     <Text style={styles.title}>{item.title}</Text>
-          //     <Text>Name: {item.name}</Text>
-          //     <Text>affiliation: {item.affiliation}</Text>
-          //     <Text>designation: {item.designation}</Text>
-
-          //     <View style={[styles.buttonContainer, { marginTop: 20 }]}>
-          //       <Button
-          //         title="Update"
-          //         onPress={() => updateSupport(item.id)}
-          //         color="blue"
-          //       />
-          //       <Button
-          //         title="Show More Info"
-          //         onPress={() => showMoreInfo(item.id)}
-          //         color="green"
-          //       />
-          //       <Button
-          //         title="Delete"
-          //         onPress={() => deleteSupport(item.id)}
-          //         color="red"
-          //       />
-          //     </View>
-          //   </View>
-          // )}
           renderItem={renderMember}
           contentContainerStyle={{ paddingBottom: 20 }}
+          ListFooterComponent={() =>
+            loading ? <ActivityIndicator size="small" color="#0000ff" /> : null
+          }
         />
-        {lastVisibleDoc && <Button onPress={loadMoreData} title="Load More" />}
+
       </View>
     </View>
   );
@@ -661,8 +732,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    marginTop: -25,
-    zIndex: 1,
+    //marginTop: -25,
   },
   header: {
     backgroundColor: "#A32638",
@@ -712,5 +782,285 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 8,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 20,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  infoIcon: {
+    marginRight: 10,
+    width: 20,
+  },
+  infoTextWithIcon: {
+    flex: 1,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: "Inter_600SemiBold",
+    color: "#A32638",
+    marginBottom: 10,
+    marginTop: 5,
+    paddingHorizontal: 10,
+  },
+  sectionSeparator: {
+    height: 20, // Increased from 15 to accommodate titles
+  },
+  infoSection: {
+    paddingHorizontal: 5, // Adjusted padding to align with section title
+  },
+  rotaryIcon: {
+    width: 25,
+    height: 25,
+    marginRight: 10,
+  },
+  linkText: {
+    color: "#A32638",
+    textDecorationLine: "underline",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 30,
+    padding: 20,
+    paddingVertical: 10,
+    width: "85%",
+    maxHeight: "80%",
+    elevation: 8,
+  },
+  modalImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignSelf: "center",
+    marginBottom: 15,
+  },
+  modalName: {
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    textAlign: "center",
+    marginBottom: 5,
+  },
+  clubNameContainer: {
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  modalClubName: {
+    fontSize: 16,
+    color: "#17458F",
+    fontFamily: "Inter_500Medium",
+    textAlign: "center",
+  },
+  modalSeparator: {
+    height: 1,
+    backgroundColor: "#17458F",
+    width: "25%",
+    alignSelf: "center",
+    marginBottom: 15,
+  },
+  actionButtonsTop: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    marginBottom: 15,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 3,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    paddingHorizontal: 10,
+  },
+  infoText: {
+    fontSize: 16,
+    marginLeft: 10,
+    flex: 1,
+  },
+  addressButton: {
+    backgroundColor: "#17458F",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+  },
+  addressButtonText: {
+    color: "#fff",
+    textAlign: "center",
+    fontFamily: "Inter_500Medium",
+  },
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  actionButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    marginHorizontal: 5,
+  },
+  callButton: {
+    backgroundColor: "#4CAF50",
+  },
+  emailButton: {
+    backgroundColor: "#2196F3",
+  },
+  emergencyButton: {
+    width: "100%",
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 0.5,
+    borderColor: "#A32638",
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  emergencyText: {
+    color: "#A32638",
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+  },
+  actionButtonText: {
+    color: "#fff",
+    textAlign: "center",
+    fontFamily: "Inter_500Medium",
+    fontSize: 13,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingBottom: 80,
+  },
+  header: {
+    backgroundColor: "#A32638",
+    paddingBottom: 20,
+    paddingTop: 0,
+    position: "relative",
+    height: 120,
+    justifyContent: "center",
+    zIndex: 0,
+  },
+  headerImage: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    padding: 0,
+    margin: 0,
+    resizeMode: "cover",
+    opacity: 0.28,
+  },
+  headerText: {
+    fontSize: 26,
+    padding: 10,
+    paddingHorizontal: 20,
+    color: "#FFBD1B",
+    fontFamily: "Inter_500Medium",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    padding: 15,
+    paddingTop: 25,
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: -25,
+    zIndex: 1,
+  },
+  searchBox: {
+    flex: 1,
+    marginRight: 10,
+  },
+  searchInput: {
+    backgroundColor: "#fff",
+    borderRadius: 25,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    fontFamily: "Inter_400Regular",
+  },
+  filterButton: {
+    backgroundColor: "#A32638",
+    borderRadius: 25,
+    paddingHorizontal: 20,
+    justifyContent: "center",
+  },
+  filterButtonText: {
+    color: "#fff",
+    fontFamily: "Inter_500Medium",
+  },
+  grid: {
+    flex: 1,
+    padding: 10,
+  },
+  gridRow: {
+    justifyContent: "space-between",
+  },
+  gridItem: {
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 15,
+    width: "48%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    alignItems: "center",
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 10,
+  },
+  name: {
+    fontSize: 16,
+    fontFamily: "Inter-SemiBold",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  clubName: {
+    fontSize: 13,
+    color: "#17458F",
+    fontFamily: "Inter_500Medium",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "#17458F",
+    width: "100%",
+    marginBottom: 10,
+  },
+  companyName: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 5,
+  },
+  businessType: {
+    fontSize: 12,
+    color: "#666",
+    fontFamily: "Inter_500Regular",
+    textAlign: "center",
   },
 });
