@@ -456,7 +456,7 @@ const _layout = () => {
               "Error fetching user data or user does not exist:",
               error
             );
-            router.replace("/"); // Redirect to home if user does not exist
+            router.replace("/login"); // Redirect to home if user does not exist
           } else {
             setUserData({ id: userDoc.id, ...userDoc });
             setHeaderData(headerDoc);
@@ -464,10 +464,10 @@ const _layout = () => {
           }
         } catch (error) {
           console.error("Unexpected error:", error);
-          router.replace("/"); // Redirect to home if an unexpected error occurs
+          router.replace("/login"); // Redirect to home if an unexpected error occurs
         }
       } else {
-        router.replace("/"); // Redirect to home if no user is logged in
+        router.replace("/login"); // Redirect to home if no user is logged in
       }
     };
 
