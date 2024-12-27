@@ -177,7 +177,9 @@ const App = () => {
             source={require("../../../assets/images/mysore_palace.png")}
             style={styles.headerImage}
           />
-          <Text style={styles.headerText}>Hi, {userData?.name ?? "NA"}!</Text>
+          <Text style={styles.headerText}>
+            Hi, Rtn.{userData?.name ?? "NA"}!
+          </Text>
           <Text style={styles.headerSubText}>
             {headerData?.event_name ?? "Event"}
           </Text>
