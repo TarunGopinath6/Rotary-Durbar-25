@@ -26,7 +26,6 @@ export default function Index() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -129,7 +128,7 @@ export default function Index() {
             }}
           >
             <Image
-              source={require("../assets/images/adaptive-icon.png")}
+              source={require("../assets/images/durbar_1024.png")}
               style={styles.logo}
             />
           </View>
