@@ -43,7 +43,7 @@ const ItineraryScreen = () => {
   const [dataDates, setDataDates] = useState([]);
   const [itinerariesList, setItinerariesList] = useState([]);
 
-  const { headerData } = useContext(AppContext);
+  const { headerData, userData } = useContext(AppContext);
 
   const hasRun = useRef(false);
 
@@ -208,20 +208,59 @@ const ItineraryScreen = () => {
         <Text style={styles.sectionTitle}>{item.title}</Text>
         <View style={styles.sectionLine} />
       </View>
-      <EventModal />
       {item.events.map((event, index) => (
         <View key={index}>{renderTimeSlot({ item: event })}</View>
       ))}
     </View>
   );
 
-  const handleFeedbackSubmit = () => {
-    console.log("User Feedback:", feedback);
-    setFeedback(""); // Clear feedback after submission
+  const handleFeedbackSubmit = async (feedbackText) => {
+    const { data, error } = await supabase.from("feedback").insert([
+      {
+        user_id: userData.id,
+        itinerary_id: selectedEvent.id,
+        comment: feedbackText
+      },
+    ]);
+    //.onConflict(['user_id', 'post_id']); // Prevent duplicates by user_id and post_id
+
+    if (error) {
+      console.error("Error adding feedback:", error);
+    } else {
+      console.log("Feedback added successfully:", data);
+    }
+    // Clear feedback after submission
   };
 
   const EventModal = () => {
     if (!selectedEvent) return null;
+    const [loadingFeedback, setLoadingFeedback] = useState(true);
+    const [feedbackValues, setFeedbackValues] = useState([])
+
+    const getComments = async () => {
+      setLoadingFeedback(true);
+      try {
+        const { data: feedbackData, error } = await supabase
+          .from("feedback")
+          .select("*, members(name)")
+          .eq("itinerary_id", selectedEvent.id)
+
+        if (error) throw error;
+
+        setFeedbackValues(feedbackData);
+        console.log(feedbackData);
+      }
+      catch (error) {
+        console.error("Error fetching data:", error);
+      }
+      setLoadingFeedback(false);
+    }
+
+    useEffect(() => {
+      if (modalVisible) {
+        getComments();
+      }
+    }, [])
 
     return (
       <Modal
@@ -259,8 +298,11 @@ const ItineraryScreen = () => {
                 >
                   <Text style={styles.submitButtonText}>Submit Feedback</Text>
                 </TouchableOpacity>
+                {loadingFeedback === true && "Loading feedback..."}
+                {JSON.stringify(feedbackValues)}
               </View>
             </TouchableWithoutFeedback>
+
           </View>
         </TouchableWithoutFeedback>
       </Modal>
@@ -269,7 +311,8 @@ const ItineraryScreen = () => {
 
   // FEEDBACK MODAL
   const FeedbackModal = () => {
-    const [feedback, setFeedback] = useState("");
+    const [feedbackText, setFeedbackText] = useState("");
+
     if (!feedbackEvent) return null;
     return (
       <Modal
@@ -285,17 +328,18 @@ const ItineraryScreen = () => {
               style={styles.feedbackInput}
               placeholder="Enter your feedback"
               multiline
-              value={feedback}
+              value={feedbackText}
               maxLength={500}
-              onChangeText={(text) => setFeedback(text)}
-              // autoFocus={true}
+              onChangeText={(text) => setFeedbackText(text)}
+            // autoFocus={true}
             />
-            <Text style={styles.charCounter}>{`${feedback.length}/500`}</Text>
+            <Text style={styles.charCounter}>{`${feedbackText.length}/500`}</Text>
             <TouchableOpacity
               style={styles.submitButton}
               onPress={() => {
-                console.log("Feedback:", feedback);
-                setFeedback(""); // Clear feedback after submission
+                console.log("Feedback:", feedbackText);
+                handleFeedbackSubmit(feedbackText);
+                setFeedbackText(""); // Clear feedback after submission
                 setFeedbackModalVisible(false); // Close modal after submission
               }}
             >
@@ -349,6 +393,8 @@ const ItineraryScreen = () => {
           </TouchableOpacity>
         ))}
       </View>
+
+      <EventModal />
 
       {/* Day Content */}
       <FeedbackModal />
