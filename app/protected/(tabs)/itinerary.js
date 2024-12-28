@@ -66,6 +66,7 @@ const ItineraryScreen = () => {
     );
 
     try {
+      console.log(userData.id)
       const { data: itineraries, error } = await supabase
         .from("itineraries")
         .select("*")
@@ -236,17 +237,32 @@ const ItineraryScreen = () => {
     if (!selectedEvent) return null;
     const [loadingFeedback, setLoadingFeedback] = useState(true);
     const [feedbackValues, setFeedbackValues] = useState([])
+    const [canUserFeedback, setCanUserFeedback] = useState(false);
 
     const getComments = async () => {
       setLoadingFeedback(true);
       try {
-        const { data: feedbackData, error } = await supabase
+
+        const { data: permCheck, error: errorPermCheck } = await supabase
+          .from("feedback")
+          .select("id") // Only select the ID to reduce payload size
+          .eq("itinerary_id", selectedEvent.id)
+          .eq("user_id", userData.id)
+          .maybeSingle();
+
+        if (errorPermCheck) throw errorPermCheck;
+
+        if (permCheck === null)
+          setCanUserFeedback(true)
+
+        const { data: feedbackData, error: errorData } = await supabase
           .from("feedback")
           .select("*, members(name)")
           .eq("itinerary_id", selectedEvent.id)
+          .order("created_at", { ascending: false }) // Sort by created_at in descending order
+          .limit(10);
 
-        if (error) throw error;
-
+        if (errorData) throw errorData;
         setFeedbackValues(feedbackData);
         console.log(feedbackData);
       }
@@ -288,7 +304,7 @@ const ItineraryScreen = () => {
                 <Text style={styles.modalDescription}>
                   {selectedEvent.description || "No description available."}
                 </Text>
-                <TouchableOpacity
+                {canUserFeedback && <TouchableOpacity
                   style={styles.submitButton}
                   onPress={() => {
                     setFeedbackEvent(true);
@@ -297,9 +313,12 @@ const ItineraryScreen = () => {
                   }}
                 >
                   <Text style={styles.submitButtonText}>Submit Feedback</Text>
-                </TouchableOpacity>
-                {loadingFeedback === true && "Loading feedback..."}
-                {JSON.stringify(feedbackValues)}
+                </TouchableOpacity>}
+                <Text>
+                  {loadingFeedback === true && "Loading feedback..."}
+                  {JSON.stringify(feedbackValues)}
+                </Text>
+
               </View>
             </TouchableWithoutFeedback>
 
