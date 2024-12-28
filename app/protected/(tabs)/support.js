@@ -540,7 +540,7 @@ export default function Support() {
   };
 
   const renderMember = ({ item }) => (
-    <View style={styles.container}>
+    <View style={styles.memberContainer}>
       <TouchableOpacity
         onPress={() => {
           setSelectedMember(item);
@@ -622,17 +622,15 @@ export default function Support() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.listContainer}>
-        <FlatList
-          data={support}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMember}
-          contentContainerStyle={{ paddingBottom: 20 }}
-          ListFooterComponent={() =>
-            loading ? <ActivityIndicator size="small" color="#0000ff" /> : null
-          }
-        />
-      </View>
+      <FlatList
+        data={support}
+        keyExtractor={(item) => item.id}
+        renderItem={renderMember}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        ListFooterComponent={() =>
+          loading ? <ActivityIndicator size="small" color="#0000ff" /> : null
+        }
+      />
     </View>
   );
 }
@@ -741,10 +739,16 @@ const styles = StyleSheet.create({
     // borderWidth: 1,
     marginLeft: 12,
   },
+  memberContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingBottom: 20,
+    paddingHorizontal: 10,
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingBottom: 100,
+    paddingBottom: 80,
   },
   listContainer: {
     padding: 15,
@@ -752,6 +756,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
+    paddingBottom: 100,
     //marginTop: -25,
   },
   header: {
