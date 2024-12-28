@@ -187,7 +187,7 @@ const ItineraryScreen = () => {
                 <Text style={styles.eventVenue}>{item.venue}</Text>
               </View>
             </View>
-            <Image source={item.image} style={styles.eventImage} />
+            <Image source={{ uri: item.image }} style={styles.eventImage} />
           </View>
         </View>
       </TouchableOpacity>

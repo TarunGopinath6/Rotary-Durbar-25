@@ -259,7 +259,7 @@ const App = () => {
           >
             <Text style={styles.postText}>{item.text}</Text>
             {item.image && (
-              <Image source={item.image} style={styles.postImage} />
+              <Image source={{ uri: item.image }} style={styles.postImage} />
             )}
             {item.link && (
               <Text
