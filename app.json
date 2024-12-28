@@ -27,7 +27,7 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/durbar_1024_square.png",
-          "imageWidth": "50%",
+          "imageWidth": "75%",
           "resizeMode": "contain",
           "backgroundColor": "#a32638"
         }
