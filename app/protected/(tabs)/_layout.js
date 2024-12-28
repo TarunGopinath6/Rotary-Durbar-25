@@ -488,7 +488,7 @@ const _layout = () => {
 
             switch (route.name) {
               case "index":
-                iconName = focused ? "layers" : "layers-outline";
+                iconName = focused ? "apps" : "apps-outline";
                 break;
               case "itinerary":
                 iconName = focused ? "calendar" : "calendar-outline";
@@ -500,7 +500,7 @@ const _layout = () => {
                 iconName = focused ? "person" : "person-outline";
                 break;
               case "support":
-                iconName = focused ? "help-circle" : "help-circle-outline";
+                iconName = focused ? "trophy" : "trophy-outline";
                 break;
               default:
                 iconName = "alert-circle-outline";
