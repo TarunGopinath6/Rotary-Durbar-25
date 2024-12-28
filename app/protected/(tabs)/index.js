@@ -192,7 +192,11 @@ const App = () => {
             source={require("../../../assets/images/rotary_logo.png")}
             style={styles.logo}
           />
-          <Text style={styles.logoText}>District 3234</Text>
+          <Image
+            source={require("../../../assets/images/district_3234.png")}
+            style={styles.logo}
+          />
+          {/* <Text style={styles.logoText}>District 3234</Text> */}
           <Image
             source={require("../../../assets/images/durbar_badge.png")}
             style={styles.logo}
@@ -401,7 +405,7 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   logoText: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#17458F",
     fontFamily: "Inter_700Bold",
   },

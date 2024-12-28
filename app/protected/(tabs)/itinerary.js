@@ -222,7 +222,10 @@ const ItineraryScreen = () => {
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
               <View style={styles.modalContent}>
-                <Image source={selectedEvent.image} style={styles.modalImage} />
+                <Image
+                  source={{ uri: selectedEvent.image }}
+                  style={styles.modalImage}
+                />
                 <Text style={styles.modalTitle}>{selectedEvent.title}</Text>
                 <View style={styles.modalTimeContainer}>
                   <Text style={styles.modalTime}>
