@@ -8,6 +8,7 @@ import {
   FlatList,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
@@ -38,7 +39,15 @@ export default function Profile() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          {
+            height: Platform.OS === "ios" ? 160 : 120,
+            paddingTop: Platform.OS === "ios" ? 30 : 0,
+          },
+        ]}
+      >
         <Image
           source={require("../../../assets/images/mysore_palace.png")}
           style={styles.headerImage}
@@ -48,7 +57,10 @@ export default function Profile() {
       <View style={styles.scrollContent}>
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: Platform.OS === "ios" ? 60 : 30 },
+          ]}
           bounces={true}
         >
           <Image

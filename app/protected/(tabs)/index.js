@@ -10,6 +10,7 @@ import {
   Linking,
   Dimensions,
   Alert,
+  Platform,
 } from "react-native";
 import moment from "moment";
 import { AppContext } from "./_layout";
@@ -172,7 +173,15 @@ const App = () => {
         <View style={styles.topBackground} />
 
         {/* Header */}
-        <View style={styles.header}>
+        <View
+          style={[
+            styles.header,
+            {
+              height: Platform.OS === "ios" ? 200 : 160,
+              paddingTop: Platform.OS === "ios" ? 30 : 0,
+            },
+          ]}
+        >
           <Image
             source={require("../../../assets/images/mysore_palace.png")}
             style={styles.headerImage}
@@ -352,7 +361,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     paddingTop: 0,
     position: "relative",
-    height: "160",
+    height: 160,
     justifyContent: "center",
     zIndex: 0,
   },

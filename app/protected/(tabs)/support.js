@@ -597,7 +597,15 @@ export default function Support() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          {
+            height: Platform.OS === "ios" ? 160 : 120,
+            paddingTop: Platform.OS === "ios" ? 30 : 0,
+          },
+        ]}
+      >
         <Image
           source={require("../../../assets/images/mysore_palace.png")}
           style={styles.headerImage}

@@ -12,6 +12,8 @@ import {
   ActivityIndicator,
   Alert,
   StatusBar,
+  KeyboardAvoidingView,
+  ScrollView,
 } from "react-native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -117,8 +119,11 @@ export default function Index() {
         barStyle="dark-content"
         translucent={false}
       />
-      <SafeAreaView style={styles.container}>
-        <View style={styles.contentContainer}>
+      <KeyboardAvoidingView style={styles.container}>
+        <ScrollView
+          style={styles.contentContainer}
+          contentContainerStyle={{ justifyContent: "center" }}
+        >
           <View
             style={{
               flex: 1,
@@ -223,11 +228,31 @@ export default function Index() {
 
           <Text style={styles.termsText}>
             By clicking Continue you agree to the {"\n"}
-            <Text style={styles.termsLink}>Terms of use</Text> and{" "}
-            <Text style={styles.termsLink}>Privacy policy</Text>
+            <Text
+              style={styles.termsLink}
+              onPress={() =>
+                Linking.openURL(
+                  "https://docs.google.com/document/d/187fIWVSyeHq3YXGkm2Ylmf7LeDAJpwM2703tVwpwYtk/edit?usp=sharing"
+                )
+              }
+            >
+              Terms of use
+            </Text>{" "}
+            and{" "}
+            <Text
+              style={styles.termsLink}
+              onPress={() =>
+                Linking.openURL(
+                  "https://docs.google.com/document/d/1axUBu7SwNgFViQ-jPlrQCyx-kgLE8xKoxROS3A7DDIY/edit?usp=sharing"
+                )
+              }
+            >
+              Privacy policy
+            </Text>
+            .
           </Text>
-        </View>
-      </SafeAreaView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </>
   );
 }
@@ -245,7 +270,8 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     padding: 24,
-    justifyContent: "center",
+    paddingTop: "20%",
+    // justifyContent: "center",
   },
   title: {
     fontSize: 28,
@@ -346,6 +372,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   termsLink: {
-    color: "#17458F", // Navy blue from your palette
+    color: "#17458F",
   },
 });

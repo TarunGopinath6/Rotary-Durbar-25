@@ -9,6 +9,10 @@ import {
   Modal,
   TouchableWithoutFeedback,
   ActivityIndicator,
+  Platform,
+  TextInput,
+  KeyboardAvoidingView,
+  Keyboard,
 } from "react-native";
 import moment from "moment";
 import { AppContext } from "./_layout";
@@ -30,6 +34,9 @@ const ItineraryScreen = () => {
   const [activeTab, setActiveTab] = useState("Day 1");
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  // FEEDBACK STATES
+  const [feedbackEvent, setFeedbackEvent] = useState(null);
+  const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [tabNames, setTabNames] = useState([]);
@@ -208,6 +215,11 @@ const ItineraryScreen = () => {
     </View>
   );
 
+  const handleFeedbackSubmit = () => {
+    console.log("User Feedback:", feedback);
+    setFeedback(""); // Clear feedback after submission
+  };
+
   const EventModal = () => {
     if (!selectedEvent) return null;
 
@@ -227,16 +239,26 @@ const ItineraryScreen = () => {
                   style={styles.modalImage}
                 />
                 <Text style={styles.modalTitle}>{selectedEvent.title}</Text>
-                <View style={styles.modalTimeContainer}>
-                  <Text style={styles.modalTime}>
-                    {selectedEvent.startTime} - {selectedEvent.endTime}
-                  </Text>
-                  <Text style={styles.modalTime}>{selectedEvent.venue}</Text>
-                </View>
+                {/* <View style={styles.modalTimeContainer}> */}
+                <Text style={styles.modalTime}>
+                  {selectedEvent.startTime} - {selectedEvent.endTime}
+                </Text>
+                {/* </View> */}
+                <Text style={styles.modalTime}>{selectedEvent.venue}</Text>
                 <Text style={styles.modalVenue}>{activeTab}</Text>
                 <Text style={styles.modalDescription}>
                   {selectedEvent.description || "No description available."}
                 </Text>
+                <TouchableOpacity
+                  style={styles.submitButton}
+                  onPress={() => {
+                    setFeedbackEvent(true);
+                    setModalVisible(false);
+                    setFeedbackModalVisible(true);
+                  }}
+                >
+                  <Text style={styles.submitButtonText}>Submit Feedback</Text>
+                </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -245,10 +267,57 @@ const ItineraryScreen = () => {
     );
   };
 
+  // FEEDBACK MODAL
+  const FeedbackModal = () => {
+    const [feedback, setFeedback] = useState("");
+    if (!feedbackEvent) return null;
+    return (
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={feedbackModalVisible}
+        onRequestClose={() => setFeedbackModalVisible(false)}
+      >
+        <KeyboardAvoidingView style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {/* Feedback Section */}
+            <TextInput
+              style={styles.feedbackInput}
+              placeholder="Enter your feedback"
+              multiline
+              value={feedback}
+              maxLength={500}
+              onChangeText={(text) => setFeedback(text)}
+              // autoFocus={true}
+            />
+            <Text style={styles.charCounter}>{`${feedback.length}/500`}</Text>
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={() => {
+                console.log("Feedback:", feedback);
+                setFeedback(""); // Clear feedback after submission
+                setFeedbackModalVisible(false); // Close modal after submission
+              }}
+            >
+              <Text style={styles.submitButtonText}>Submit</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+    );
+  };
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          {
+            height: Platform.OS === "ios" ? 160 : 120,
+            paddingTop: Platform.OS === "ios" ? 30 : 0,
+          },
+        ]}
+      >
         <Image
           source={require("../../../assets/images/mysore_palace.png")}
           style={styles.headerImage}
@@ -282,6 +351,8 @@ const ItineraryScreen = () => {
       </View>
 
       {/* Day Content */}
+      <FeedbackModal />
+
       <FlatList
         // data={dayData[activeTab]}
         data={itinerariesList}
@@ -298,6 +369,39 @@ const ItineraryScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  modalContentWrapper: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    width: "85%",
+  },
+  feedbackInput: {
+    height: 150,
+    width: "90%",
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
+    textAlignVertical: "top",
+    marginBottom: 10,
+  },
+  charCounter: {
+    alignSelf: "flex-end",
+    marginRight: 20,
+    color: "#666",
+  },
+  submitButton: {
+    backgroundColor: "#a32638",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    alignSelf: "center",
+    marginTop: 10,
+  },
+  submitButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",
@@ -306,7 +410,6 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: "#A32638",
     paddingBottom: 20,
-    paddingTop: 0,
     position: "relative",
     height: 120,
     justifyContent: "center",
@@ -482,6 +585,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     fontFamily: "Inter_500Medium",
+    marginBottom: 10,
   },
   modalVenue: {
     fontSize: 16,
@@ -493,7 +597,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
     fontFamily: "Inter_400Regular",
-    textAlign: "justify",
+    textAlign: "center",
     lineHeight: 20,
   },
 });
