@@ -12,7 +12,7 @@ import {
   Platform,
   Modal,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
 import {
   collection,
@@ -41,7 +41,6 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { db } from "@/firebaseConfig";
 import supabase from "@/supabase.js";
 
-
 export default function Support() {
   const [support, setSupport] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -68,8 +67,8 @@ export default function Support() {
     let query = supabase
       .from("members")
       .select("*")
-      .eq('support', true)
-      .eq('role', 'member')
+      .eq("support", true)
+      .eq("role", "member")
       .order("priority", { descending: true });
 
     if (queryText) {
@@ -106,7 +105,6 @@ export default function Support() {
     // handleSearch(searchQuery);
     loadMembers(searchQuery);
   }, [searchQuery]);
-
 
   const formatClubName = (name) => {
     const words = name.split(" ");
@@ -276,7 +274,7 @@ export default function Support() {
                         {selectedMember.affiliation}
                       </Text>
                     </View>
-                    
+
                     <View style={styles.infoRow}>
                       <Ionicons name="ribbon" size={20} color="#A32638" />
                       <Text style={styles.infoText}>
@@ -470,7 +468,7 @@ export default function Support() {
                     </View>
                     {selectedMember.emergency_contact_relationship &&
                       selectedMember.emergency_contact_relationship !==
-                      "NA" && (
+                        "NA" && (
                         <View style={styles.infoRow}>
                           <Ionicons name="people" size={20} color="#A32638" />
                           <Text style={styles.infoText}>
@@ -541,26 +539,23 @@ export default function Support() {
     );
   };
 
-
   const renderMember = ({ item }) => (
     <View style={styles.container}>
       <TouchableOpacity
         onPress={() => {
           setSelectedMember(item);
           setModalVisible(true);
-          console.log(item, modalVisible)
+          console.log(item, modalVisible);
         }}
       >
         <MemberModal />
         <View style={styles.memberCard}>
+          <View style={styles.memberMeta}>
+            <Text style={styles.memberSetsTitle}>{item.sets_designation}</Text>
+            <Text style={styles.memberType}>{item.affiliation}</Text>
+          </View>
           <View style={styles.memberContent}>
             <View style={styles.memberInfo}>
-              <View style={styles.memberMeta}>
-                <Text style={styles.memberSetsTitle}>
-                  {item.sets_designation}
-                </Text>
-                <Text style={styles.memberType}>{item.affiliation}</Text>
-              </View>
               <Text style={styles.memberName}>{item.name}</Text>
               <Text style={styles.memberTitle}>
                 {formatClubName(item.club_name).firstLine}
@@ -637,19 +632,28 @@ export default function Support() {
             loading ? <ActivityIndicator size="small" color="#0000ff" /> : null
           }
         />
-
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // actionButtonsTop: {
+  //   flexDirection: "row",
+  //   marginTop: 15,
+  //   marginHorizontal: "20%",
+  //   justifyContent: "space-between",
+  //   backgroundColor: "red",
+  //   marginBottom: 5,
+  // },
   actionButtonsTop: {
-    flexDirection: "row",
-    marginTop: 15,
-    marginHorizontal: 50,
-    justifyContent: "space-between",
-    marginBottom: 5,
+    flexDirection: "column",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    width: "50%",
+    alignSelf: "center",
+    marginTop: 20,
+    marginBottom: 0,
   },
   iconButton: {
     width: 40,
@@ -664,6 +668,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 10,
     padding: 15,
+    paddingBottom: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -671,14 +676,23 @@ const styles = StyleSheet.create({
     elevation: 2,
     marginBottom: 5,
   },
+  // memberContent: {
+  //   flexDirection: "row",
+  //   justifyContent: "space-between",
+  // },
   memberContent: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
   },
+  // memberInfo: {
+  //   flex: 1,
+  //   justifyContent: "space-between",
+  //   marginRight: 10,
+  // },
   memberInfo: {
     flex: 1,
-    justifyContent: "space-between",
-    marginRight: 10,
   },
   memberSetsTitle: {
     fontSize: 15,
@@ -698,10 +712,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textTransform: "capitalize",
   },
+  // memberMeta: {
+  //   flexDirection: "row",
+  //   justifyContent: "space-between",
+  //   marginTop: 10,
+  // },
   memberMeta: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
+    alignItems: "center",
+    marginBottom: 10,
   },
   memberType: {
     fontSize: 13,

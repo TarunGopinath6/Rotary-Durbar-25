@@ -194,7 +194,7 @@ const App = () => {
           />
           <Text style={styles.logoText}>District 3234</Text>
           <Image
-            source={require("../../../assets/images/splash-icon.png")}
+            source={require("../../../assets/images/durbar_badge.png")}
             style={styles.logo}
           />
         </View>
@@ -396,12 +396,12 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: 90,
+    height: 90,
     resizeMode: "contain",
   },
   logoText: {
-    fontSize: 17,
+    fontSize: 16,
     color: "#17458F",
     fontFamily: "Inter_700Bold",
   },

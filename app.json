@@ -4,7 +4,7 @@
     "slug": "rotary-club-durbar",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/durbar_512.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,10 +13,7 @@
       "bundleIdentifier": "com.dasorakel.rotaryclubdurbar"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#a32638"
-      },
+      "icon": "./assets/images/durbar_512.png",
       "package": "com.dasorakel.rotaryclubdurbar"
     },
     "web": {
@@ -29,7 +26,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/durbar_1024_square.png",
           "imageWidth": "50%",
           "resizeMode": "contain",
           "backgroundColor": "#a32638"
