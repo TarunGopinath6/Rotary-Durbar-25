@@ -13,7 +13,9 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Keyboard,
+  ScrollView,
 } from "react-native";
+import Ionicons from "react-native-vector-icons/Ionicons";
 import moment from "moment";
 import { AppContext } from "./_layout";
 import {
@@ -66,7 +68,7 @@ const ItineraryScreen = () => {
     );
 
     try {
-      console.log(userData.id)
+      console.log(userData.id);
       const { data: itineraries, error } = await supabase
         .from("itineraries")
         .select("*")
@@ -216,13 +218,16 @@ const ItineraryScreen = () => {
   );
 
   const handleFeedbackSubmit = async (feedbackText) => {
-    const { data, error } = await supabase.from("feedback").insert([
-      {
-        user_id: userData.id,
-        itinerary_id: selectedEvent.id,
-        comment: feedbackText
-      },
-    ]);
+    if (feedbackText.length > 0 && feedbackText.length < 501) {
+      const { data, error } = await supabase.from("feedback").insert([
+        {
+          user_id: userData.id,
+          itinerary_id: selectedEvent.id,
+          comment: feedbackText,
+        },
+      ]);
+    }
+
     //.onConflict(['user_id', 'post_id']); // Prevent duplicates by user_id and post_id
 
     if (error) {
@@ -236,13 +241,12 @@ const ItineraryScreen = () => {
   const EventModal = () => {
     if (!selectedEvent) return null;
     const [loadingFeedback, setLoadingFeedback] = useState(true);
-    const [feedbackValues, setFeedbackValues] = useState([])
+    const [feedbackValues, setFeedbackValues] = useState([]);
     const [canUserFeedback, setCanUserFeedback] = useState(false);
 
     const getComments = async () => {
       setLoadingFeedback(true);
       try {
-
         const { data: permCheck, error: errorPermCheck } = await supabase
           .from("feedback")
           .select("id") // Only select the ID to reduce payload size
@@ -252,8 +256,7 @@ const ItineraryScreen = () => {
 
         if (errorPermCheck) throw errorPermCheck;
 
-        if (permCheck === null)
-          setCanUserFeedback(true)
+        if (permCheck === null) setCanUserFeedback(true);
 
         const { data: feedbackData, error: errorData } = await supabase
           .from("feedback")
@@ -264,19 +267,25 @@ const ItineraryScreen = () => {
 
         if (errorData) throw errorData;
         setFeedbackValues(feedbackData);
+        // setFeedbackValues((prevValues) => {
+        //   const newValues = [...prevValues];
+        //   for (let i = 0; i < 5; i++) {
+        //     newValues.push(...prevValues);
+        //   }
+        //   return newValues;
+        // });
         console.log(feedbackData);
-      }
-      catch (error) {
+      } catch (error) {
         console.error("Error fetching data:", error);
       }
       setLoadingFeedback(false);
-    }
+    };
 
     useEffect(() => {
       if (modalVisible) {
         getComments();
       }
-    }, [])
+    }, []);
 
     return (
       <Modal
@@ -285,26 +294,36 @@ const ItineraryScreen = () => {
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.modalContent}>
-                <Image
-                  source={{ uri: selectedEvent.image }}
-                  style={styles.modalImage}
-                />
-                <Text style={styles.modalTitle}>{selectedEvent.title}</Text>
-                {/* <View style={styles.modalTimeContainer}> */}
-                <Text style={styles.modalTime}>
-                  {selectedEvent.startTime} - {selectedEvent.endTime}
-                </Text>
-                {/* </View> */}
-                <Text style={styles.modalTime}>{selectedEvent.venue}</Text>
-                <Text style={styles.modalVenue}>{activeTab}</Text>
-                <Text style={styles.modalDescription}>
-                  {selectedEvent.description || "No description available."}
-                </Text>
-                {canUserFeedback && <TouchableOpacity
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Ionicons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}
+              bounces={true}
+            >
+              <Image
+                source={{ uri: selectedEvent.image }}
+                style={styles.modalImage}
+              />
+              <Text style={styles.modalTitle}>{selectedEvent.title}</Text>
+              <Text style={styles.modalTime}>
+                {selectedEvent.startTime} - {selectedEvent.endTime}
+              </Text>
+              <Text style={styles.modalTime}>{selectedEvent.venue}</Text>
+              <Text style={styles.modalVenue}>{activeTab}</Text>
+              <Text style={styles.modalDescription}>
+                {selectedEvent.description || "No description available."}
+              </Text>
+
+              {canUserFeedback && (
+                <TouchableOpacity
                   style={styles.submitButton}
                   onPress={() => {
                     setFeedbackEvent(true);
@@ -313,17 +332,35 @@ const ItineraryScreen = () => {
                   }}
                 >
                   <Text style={styles.submitButtonText}>Submit Feedback</Text>
-                </TouchableOpacity>}
-                <Text>
-                  {loadingFeedback === true && "Loading feedback..."}
-                  {JSON.stringify(feedbackValues)}
-                </Text>
+                </TouchableOpacity>
+              )}
 
-              </View>
-            </TouchableWithoutFeedback>
+              {feedbackValues.length > 0 && (
+                <View style={styles.feedbackContainer}>
+                  <View style={styles.feedbackHeader}>
+                    <Text style={styles.feedbackTitle}>Feedback</Text>
+                    <View style={styles.feedbackLine} />
+                  </View>
 
+                  {loadingFeedback ? (
+                    <Text>Loading feedback...</Text>
+                  ) : (
+                    feedbackValues.map((feedback) => (
+                      <View key={feedback.id} style={styles.feedbackItem}>
+                        <Text style={styles.feedbackUser}>
+                          {feedback.members.name}
+                        </Text>
+                        <Text style={styles.feedbackComment}>
+                          {feedback.comment}
+                        </Text>
+                      </View>
+                    ))
+                  )}
+                </View>
+              )}
+            </ScrollView>
           </View>
-        </TouchableWithoutFeedback>
+        </View>
       </Modal>
     );
   };
@@ -340,26 +377,46 @@ const ItineraryScreen = () => {
         visible={feedbackModalVisible}
         onRequestClose={() => setFeedbackModalVisible(false)}
       >
-        <KeyboardAvoidingView style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            {/* Feedback Section */}
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <View
+            style={[
+              styles.modalContent,
+              { paddingVertical: 20, paddingHorizontal: 20 },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setFeedbackModalVisible(false)}
+            >
+              <Ionicons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+
+            <Text style={styles.modalTitle}>Share Your Feedback</Text>
+
             <TextInput
               style={styles.feedbackInput}
               placeholder="Enter your feedback"
+              placeholderTextColor="#666"
               multiline
               value={feedbackText}
               maxLength={500}
               onChangeText={(text) => setFeedbackText(text)}
-            // autoFocus={true}
             />
-            <Text style={styles.charCounter}>{`${feedbackText.length}/500`}</Text>
+
+            <Text
+              style={styles.charCounter}
+            >{`${feedbackText.length}/500`}</Text>
+
             <TouchableOpacity
               style={styles.submitButton}
               onPress={() => {
                 console.log("Feedback:", feedbackText);
                 handleFeedbackSubmit(feedbackText);
-                setFeedbackText(""); // Clear feedback after submission
-                setFeedbackModalVisible(false); // Close modal after submission
+                setFeedbackText("");
+                setFeedbackModalVisible(false);
               }}
             >
               <Text style={styles.submitButtonText}>Submit</Text>
@@ -441,31 +498,39 @@ const styles = StyleSheet.create({
     width: "85%",
   },
   feedbackInput: {
+    width: "100%",
     height: 150,
-    width: "90%",
-    borderColor: "#ccc",
     borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
+    borderColor: "#ccc",
+    borderRadius: 15,
+    padding: 15,
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    color: "#333",
     textAlignVertical: "top",
     marginBottom: 10,
+    marginTop: 20,
   },
   charCounter: {
     alignSelf: "flex-end",
-    marginRight: 20,
     color: "#666",
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    marginBottom: 10,
   },
   submitButton: {
-    backgroundColor: "#a32638",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    alignSelf: "center",
+    backgroundColor: "#A32638",
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
     marginTop: 10,
+    width: "50%",
   },
   submitButtonText: {
     color: "#fff",
-    fontWeight: "bold",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 16,
+    textAlign: "center",
   },
   container: {
     flex: 1,
@@ -548,10 +613,10 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 17,
     color: "#A32638",
     fontFamily: "Inter_700Bold",
-    paddingHorizontal: 10,
+    marginHorizontal: 15,
   },
   sectionLine: {
     flex: 1,
@@ -622,10 +687,21 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: "#fff",
     borderRadius: 30,
-    padding: 20,
-    paddingVertical: 30,
     width: "85%",
+    maxHeight: "80%",
     elevation: 8,
+    position: "relative",
+  },
+  closeButton: {
+    position: "absolute",
+    right: 20,
+    top: 20,
+    zIndex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingTop: 50,
+    paddingBottom: 30,
     alignItems: "center",
   },
   modalImage: {
@@ -638,12 +714,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: "Inter_700Bold",
     textAlign: "center",
-    marginBottom: 10,
-  },
-  modalTimeContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "80%",
     marginBottom: 10,
   },
   modalTime: {
@@ -664,6 +734,55 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     textAlign: "center",
     lineHeight: 20,
+    marginBottom: 15,
+  },
+  submitButton: {
+    backgroundColor: "#A32638",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginTop: 10,
+  },
+  submitButtonText: {
+    color: "#fff",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    textAlign: "center",
+  },
+  feedbackContainer: {
+    width: "100%",
+    marginTop: 20,
+  },
+  feedbackHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  feedbackTitle: {
+    fontSize: 18,
+    fontFamily: "Inter_700Bold",
+    color: "#333",
+  },
+  feedbackLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#ccc",
+    marginLeft: 10,
+  },
+  feedbackItem: {
+    marginBottom: 15,
+    width: "100%",
+  },
+  feedbackUser: {
+    fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
+    color: "#a32638",
+  },
+  feedbackComment: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    color: "#666",
+    marginTop: 5,
   },
 });
 
