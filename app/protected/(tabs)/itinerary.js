@@ -313,7 +313,10 @@ const ItineraryScreen = () => {
     }, []);
 
     const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }) => {
-      const paddingToBottom = 20; // Adjust based on your needs
+      const paddingToBottom = 100; // Adjust based on your needs
+
+      console.log(layoutMeasurement.height + contentOffset.y >=
+        contentSize.height - paddingToBottom)
       return (
         layoutMeasurement.height + contentOffset.y >=
         contentSize.height - paddingToBottom
@@ -342,7 +345,8 @@ const ItineraryScreen = () => {
               bounces={true}
 
               onScroll={({ nativeEvent }) => {
-                if (isCloseToBottom(nativeEvent) && hasMore && !loadingFeedback) {
+                if (isCloseToBottom(nativeEvent)) {
+                  console.log('jjjjjjj')
                   loadFeedback();
                 }
               }}
