@@ -9,6 +9,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Linking,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
@@ -35,6 +36,28 @@ export default function Profile() {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
     return null;
+  };
+
+  const handleCall = (phoneNumber) => {
+    Linking.openURL(`tel:${phoneNumber}`);
+  };
+
+  const handleEmail = (email) => {
+    Linking.openURL(`mailto:${email}`);
+  };
+
+  const handleMaps = (address) => {
+    const encodedAddress = encodeURIComponent(address);
+    const mapsUrl = Platform.select({
+      ios: `maps://app?q=${encodedAddress}`,
+      android: `geo:0,0?q=${encodedAddress}`,
+    });
+    Linking.openURL(mapsUrl).catch(() => {
+      // Fallback to Google Maps web URL
+      Linking.openURL(
+        `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`
+      );
+    });
   };
 
   return (
