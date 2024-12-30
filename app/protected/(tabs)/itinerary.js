@@ -240,21 +240,26 @@ const ItineraryScreen = () => {
 
   const EventModal = () => {
     if (!selectedEvent) return null;
-    const [loadingFeedback, setLoadingFeedback] = useState(true);
+    const [loadingFeedback, setLoadingFeedback] = useState(false);
     const [feedbackValues, setFeedbackValues] = useState([]);
     const [canUserFeedback, setCanUserFeedback] = useState(false);
+    const [offsetDoc, setOffsetDoc] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
 
-    const getComments = async () => {
-      setLoadingFeedback(true);
+    const PAGE_SIZE = 10;
+
+    const getComments = async (offset = 0) => {
       try {
         const { data: permCheck, error: errorPermCheck } = await supabase
           .from("feedback")
           .select("id") // Only select the ID to reduce payload size
           .eq("itinerary_id", selectedEvent.id)
           .eq("user_id", userData.id)
-          .maybeSingle();
 
-        if (errorPermCheck) throw errorPermCheck;
+        if (errorPermCheck) {
+          console.error("Error checking feedback perms:", error);
+          return [];
+        }
 
         if (permCheck === null) setCanUserFeedback(true);
 
@@ -263,29 +268,57 @@ const ItineraryScreen = () => {
           .select("*, members(name)")
           .eq("itinerary_id", selectedEvent.id)
           .order("created_at", { ascending: false }) // Sort by created_at in descending order
-          .limit(10);
+          .range(offset, offset + PAGE_SIZE - 1);
 
-        if (errorData) throw errorData;
-        setFeedbackValues(feedbackData);
-        // setFeedbackValues((prevValues) => {
-        //   const newValues = [...prevValues];
-        //   for (let i = 0; i < 5; i++) {
-        //     newValues.push(...prevValues);
-        //   }
-        //   return newValues;
-        // });
+        if (errorData) {
+          console.error("Error retriving feedback:", error);
+          return [];
+        }
         console.log(feedbackData);
+        return feedbackData;
       } catch (error) {
         console.error("Error fetching data:", error);
+        return []
       }
-      setLoadingFeedback(false);
     };
+
+
+    const loadFeedback = async (reset = false) => {
+      if (loadingFeedback) return;
+      setLoadingFeedback(true);
+
+      let response = null;
+      if (reset) {
+        response = await getComments(0);
+        setFeedbackValues(response);
+        setOffsetDoc(response.length);
+      }
+      else {
+        response = await getComments(offsetDoc);
+        setFeedbackValues((prev) => [...prev, ...response]);
+        setOffsetDoc(offsetDoc + response.length);
+      }
+
+      if (response.length < PAGE_SIZE) {
+        setHasMore(false); // No more data if fewer than limit records are returned
+      }
+
+      setLoadingFeedback(false);
+    }
 
     useEffect(() => {
       if (modalVisible) {
-        getComments();
+        loadFeedback(true);
       }
     }, []);
+
+    const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }) => {
+      const paddingToBottom = 20; // Adjust based on your needs
+      return (
+        layoutMeasurement.height + contentOffset.y >=
+        contentSize.height - paddingToBottom
+      );
+    };
 
     return (
       <Modal
@@ -307,6 +340,13 @@ const ItineraryScreen = () => {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.scrollContent}
               bounces={true}
+
+              onScroll={({ nativeEvent }) => {
+                if (isCloseToBottom(nativeEvent) && hasMore && !loadingFeedback) {
+                  loadFeedback();
+                }
+              }}
+              scrollEventThrottle={400}
             >
               <Image
                 source={{ uri: selectedEvent.image }}
@@ -342,9 +382,7 @@ const ItineraryScreen = () => {
                     <View style={styles.feedbackLine} />
                   </View>
 
-                  {loadingFeedback ? (
-                    <Text>Loading feedback...</Text>
-                  ) : (
+                  {(
                     feedbackValues.map((feedback) => (
                       <View key={feedback.id} style={styles.feedbackItem}>
                         <Text style={styles.feedbackUser}>
@@ -356,6 +394,9 @@ const ItineraryScreen = () => {
                       </View>
                     ))
                   )}
+
+                  {loadingFeedback && <Text>Loading feedback...</Text>}
+
                 </View>
               )}
             </ScrollView>

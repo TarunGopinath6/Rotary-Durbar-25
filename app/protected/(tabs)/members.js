@@ -94,7 +94,7 @@ const DirectoryScreen = () => {
       setOffsetDoc(offsetDoc + response.length);
     }
 
-    if (response.length < 10) {
+    if (response.length < PAGE_SIZE) {
       setHasMore(false); // No more data if fewer than limit records are returned
     }
 
