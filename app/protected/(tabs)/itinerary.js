@@ -254,7 +254,7 @@ const ItineraryScreen = () => {
           .from("feedback")
           .select("id") // Only select the ID to reduce payload size
           .eq("itinerary_id", selectedEvent.id)
-          .eq("user_id", userData.id)
+          .eq("user_id", userData.id);
 
         if (errorPermCheck) {
           console.error("Error checking feedback perms:", error);
@@ -278,10 +278,9 @@ const ItineraryScreen = () => {
         return feedbackData;
       } catch (error) {
         console.error("Error fetching data:", error);
-        return []
+        return [];
       }
     };
-
 
     const loadFeedback = async (reset = false) => {
       if (loadingFeedback) return;
@@ -292,8 +291,7 @@ const ItineraryScreen = () => {
         response = await getComments(0);
         setFeedbackValues(response);
         setOffsetDoc(response.length);
-      }
-      else {
+      } else {
         response = await getComments(offsetDoc);
         setFeedbackValues((prev) => [...prev, ...response]);
         setOffsetDoc(offsetDoc + response.length);
@@ -304,7 +302,7 @@ const ItineraryScreen = () => {
       }
 
       setLoadingFeedback(false);
-    }
+    };
 
     useEffect(() => {
       if (modalVisible) {
@@ -312,11 +310,17 @@ const ItineraryScreen = () => {
       }
     }, []);
 
-    const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }) => {
+    const isCloseToBottom = ({
+      layoutMeasurement,
+      contentOffset,
+      contentSize,
+    }) => {
       const paddingToBottom = 100; // Adjust based on your needs
 
-      console.log(layoutMeasurement.height + contentOffset.y >=
-        contentSize.height - paddingToBottom)
+      console.log(
+        layoutMeasurement.height + contentOffset.y >=
+          contentSize.height - paddingToBottom
+      );
       return (
         layoutMeasurement.height + contentOffset.y >=
         contentSize.height - paddingToBottom
@@ -343,10 +347,9 @@ const ItineraryScreen = () => {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.scrollContent}
               bounces={true}
-
               onScroll={({ nativeEvent }) => {
                 if (isCloseToBottom(nativeEvent)) {
-                  console.log('jjjjjjj')
+                  console.log("jjjjjjj");
                   loadFeedback();
                 }
               }}
@@ -386,21 +389,18 @@ const ItineraryScreen = () => {
                     <View style={styles.feedbackLine} />
                   </View>
 
-                  {(
-                    feedbackValues.map((feedback) => (
-                      <View key={feedback.id} style={styles.feedbackItem}>
-                        <Text style={styles.feedbackUser}>
-                          {feedback.members.name}
-                        </Text>
-                        <Text style={styles.feedbackComment}>
-                          {feedback.comment}
-                        </Text>
-                      </View>
-                    ))
-                  )}
+                  {feedbackValues.map((feedback) => (
+                    <View key={feedback.id} style={styles.feedbackItem}>
+                      <Text style={styles.feedbackUser}>
+                        {feedback.members.name}
+                      </Text>
+                      <Text style={styles.feedbackComment}>
+                        {feedback.comment}
+                      </Text>
+                    </View>
+                  ))}
 
                   {loadingFeedback && <Text>Loading feedback...</Text>}
-
                 </View>
               )}
             </ScrollView>
@@ -807,6 +807,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: "Inter_700Bold",
     color: "#333",
+    marginHorizontal: 3,
   },
   feedbackLine: {
     flex: 1,
