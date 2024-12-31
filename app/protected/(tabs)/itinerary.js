@@ -254,14 +254,14 @@ const ItineraryScreen = () => {
           .from("feedback")
           .select("id") // Only select the ID to reduce payload size
           .eq("itinerary_id", selectedEvent.id)
-          .eq("user_id", userData.id);
-
+          .eq("user_id", userData.id)
+          
         if (errorPermCheck) {
           console.error("Error checking feedback perms:", error);
           return [];
         }
 
-        if (permCheck === null) setCanUserFeedback(true);
+        if (permCheck.length === 0 || permCheck === null) setCanUserFeedback(true);
 
         const { data: feedbackData, error: errorData } = await supabase
           .from("feedback")
