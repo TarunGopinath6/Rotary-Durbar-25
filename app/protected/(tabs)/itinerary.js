@@ -350,7 +350,7 @@ const ItineraryScreen = () => {
               onScroll={({ nativeEvent }) => {
                 if (isCloseToBottom(nativeEvent)) {
                   console.log("jjjjjjj");
-                  loadFeedback();
+                  if (hasMore) loadFeedback();
                 }
               }}
               scrollEventThrottle={400}
