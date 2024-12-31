@@ -56,7 +56,7 @@ const DirectoryScreen = () => {
   const fetchMembers = async (offset = 0, queryText = "") => {
     let query = supabase
       .from("members")
-      .select("*")
+      .select("id, photograph, name, club_name, company_name, type_of_business")
       .eq("support", false)
       .eq("role", "member")
       .order("name", { ascending: true }) // Adjust the column for sorting as needed
@@ -185,6 +185,31 @@ const DirectoryScreen = () => {
   // Add this component inside DirectoryScreen but before the return statement
   const MemberModal = () => {
     if (!selectedMember) return null;
+
+    const [modalMember, setModalMember] = useState({});
+    const [loadingMemberSingle, setLoadingMemberSingle] = useState(false);
+
+    const fetchMemberSingular = async () => {
+      setLoadingMemberSingle(true);
+      let query = supabase
+        .from("members")
+        .select("*")
+        .eq('id', selectedMember.id)
+  
+      const { data, error } = await query;
+  
+      if (error) {
+        console.error("Error fetching member:", error);
+        setModalMember({});
+      }
+      setModalMember(data[0]);
+      setLoadingMemberSingle(false);
+    };
+
+    useEffect(() => {
+      fetchMemberSingular()
+    }, [])
+    
     const InfoRow = ({ icon, text }) => (
       <View style={styles.infoRow}>
         <Ionicons name={icon} size={20} color="#666" style={styles.infoIcon} />
@@ -254,28 +279,28 @@ const DirectoryScreen = () => {
                   { textTransform: "capitalize" },
                 ]}
               >
-                {selectedMember.phone && selectedMember.phone !== "NA" && (
+                {modalMember.phone && modalMember.phone !== "NA" && (
                   <TouchableOpacity
                     style={styles.iconButton}
-                    onPress={() => handleCall(parseInt(selectedMember.phone))}
+                    onPress={() => handleCall(parseInt(modalMember.phone))}
                   >
                     <Ionicons name="call" size={24} color="#A32638" />
                   </TouchableOpacity>
                 )}
-                {selectedMember.email && selectedMember.email !== "NA" && (
+                {modalMember.email && modalMember.email !== "NA" && (
                   <TouchableOpacity
                     style={styles.iconButton}
-                    onPress={() => handleEmail(selectedMember.email)}
+                    onPress={() => handleEmail(modalMember.email)}
                   >
                     <Ionicons name="mail" size={24} color="#A32638" />
                   </TouchableOpacity>
                 )}
-                {selectedMember.business_address &&
-                  selectedMember.business_address !== "NA" && (
+                {modalMember.business_address &&
+                  modalMember.business_address !== "NA" && (
                     <TouchableOpacity
                       style={styles.iconButton}
                       onPress={() =>
-                        handleMaps(selectedMember.business_address)
+                        handleMaps(modalMember.business_address)
                       }
                     >
                       <Ionicons name="location" size={24} color="#A32638" />
@@ -283,13 +308,13 @@ const DirectoryScreen = () => {
                   )}
               </View>
 
-              {selectedMember.emergency_contact_phone &&
-                selectedMember.emergency_contact_phone !== "NA" && (
+              {modalMember.emergency_contact_phone &&
+                modalMember.emergency_contact_phone !== "NA" && (
                   <TouchableOpacity
                     style={styles.emergencyButton}
                     onPress={() =>
                       handleCall(
-                        parseInt(selectedMember.emergency_contact_phone)
+                        parseInt(modalMember.emergency_contact_phone)
                       )
                     }
                   >
@@ -297,13 +322,13 @@ const DirectoryScreen = () => {
                   </TouchableOpacity>
                 )}
 
-              {selectedMember.rotarian_since &&
-                selectedMember.rotarian_since !== "NA" && (
+              {modalMember.rotarian_since &&
+                modalMember.rotarian_since !== "NA" && (
                   <Text style={styles.sectionTitle}>Rotary</Text>
                 )}
               {/* Rotary Information */}
-              {selectedMember.rotarian_since &&
-                selectedMember.rotarian_since !== "NA" && (
+              {modalMember.rotarian_since &&
+                modalMember.rotarian_since !== "NA" && (
                   <View style={styles.infoSection}>
                     <View style={styles.infoRow}>
                       <Image
@@ -311,15 +336,15 @@ const DirectoryScreen = () => {
                         style={[styles.rotaryIcon, { tintColor: "#A32638" }]}
                       />
                       <Text style={styles.infoText}>
-                        {selectedMember.rotarian_since}
+                        {modalMember.rotarian_since}
                       </Text>
                     </View>
-                    {selectedMember.rotary_foundation_title &&
-                      selectedMember.rotary_foundation_title !== "NA" && (
+                    {modalMember.rotary_foundation_title &&
+                      modalMember.rotary_foundation_title !== "NA" && (
                         <View style={styles.infoRow}>
                           <Ionicons name="ribbon" size={20} color="#A32638" />
                           <Text style={styles.infoText}>
-                            {selectedMember.rotary_foundation_title}
+                            {modalMember.rotary_foundation_title}
                           </Text>
                         </View>
                       )}
@@ -347,8 +372,8 @@ const DirectoryScreen = () => {
                         {selectedMember.company_name}
                       </Text>
                     </View>
-                    {selectedMember.designation &&
-                      selectedMember.designation !== "NA" && (
+                    {modalMember.designation &&
+                      modalMember.designation !== "NA" && (
                         <View style={styles.infoRow}>
                           <Ionicons
                             name="person-circle"
@@ -361,7 +386,7 @@ const DirectoryScreen = () => {
                               { fontFamily: "Inter_600SemiBold" },
                             ]}
                           >
-                            {selectedMember.designation}
+                            {modalMember.designation}
                           </Text>
                         </View>
                       )}
@@ -374,17 +399,17 @@ const DirectoryScreen = () => {
                           </Text>
                         </View>
                       )}
-                    {selectedMember.company_sector &&
-                      selectedMember.company_sector !== "NA" && (
+                    {modalMember.company_sector &&
+                      modalMember.company_sector !== "NA" && (
                         <View style={styles.infoRow}>
                           <Ionicons name="layers" size={20} color="#fff" />
                           <Text style={styles.infoText}>
-                            {selectedMember.company_sector}
+                            {modalMember.company_sector}
                           </Text>
                         </View>
                       )}
-                    {selectedMember.about_your_business &&
-                      selectedMember.about_your_business !== "NA" && (
+                    {modalMember.about_your_business &&
+                      modalMember.about_your_business !== "NA" && (
                         <View style={styles.infoRow}>
                           <Ionicons
                             name="information-circle"
@@ -392,30 +417,30 @@ const DirectoryScreen = () => {
                             color="#fff"
                           />
                           <Text style={styles.infoText}>
-                            {selectedMember.about_your_business}
+                            {modalMember.about_your_business}
                           </Text>
                         </View>
                       )}
-                    {selectedMember.business_address &&
-                      selectedMember.business_address !== "NA" && (
+                    {modalMember.business_address &&
+                      modalMember.business_address !== "NA" && (
                         <View style={styles.infoRow}>
                           <Ionicons name="location" size={20} color="#A32638" />
                           <Text style={styles.infoText}>
-                            {selectedMember.business_address}
+                            {modalMember.business_address}
                           </Text>
                         </View>
                       )}
-                    {selectedMember.business_website &&
-                      selectedMember.business_website !== "NA" && (
+                    {modalMember.business_website &&
+                      modalMember.business_website !== "NA" && (
                         <TouchableOpacity
                           style={styles.infoRow}
                           onPress={() =>
-                            handleWebsite(selectedMember.business_website)
+                            handleWebsite(modalMember.business_website)
                           }
                         >
                           <Ionicons name="globe" size={20} color="#A32638" />
                           <Text style={[styles.infoText, styles.linkText]}>
-                            {selectedMember.business_website}
+                            {modalMember.business_website}
                           </Text>
                         </TouchableOpacity>
                       )}
@@ -425,48 +450,48 @@ const DirectoryScreen = () => {
               <View style={styles.sectionSeparator} />
 
               {/* Personal Information */}
-              {selectedMember.sex && selectedMember.sex !== "NA" && (
+              {modalMember.sex && modalMember.sex !== "NA" && (
                 <Text style={styles.sectionTitle}>Personal</Text>
               )}
-              {selectedMember.sex && selectedMember.sex !== "NA" && (
+              {modalMember.sex && modalMember.sex !== "NA" && (
                 <View style={styles.infoSection}>
                   <View style={styles.infoRow}>
                     <Ionicons name="person" size={20} color="#A32638" />
-                    <Text style={styles.infoText}>{selectedMember.sex}</Text>
+                    <Text style={styles.infoText}>{modalMember.sex}</Text>
                   </View>
-                  {selectedMember.spouses_name &&
-                    selectedMember.spouses_name !== "NA" && (
+                  {modalMember.spouses_name &&
+                    modalMember.spouses_name !== "NA" && (
                       <View style={styles.infoRow}>
                         <Ionicons name="heart" size={20} color="#A32638" />
                         <Text style={styles.infoText}>
-                          {selectedMember.spouses_name}
+                          {modalMember.spouses_name}
                         </Text>
                       </View>
                     )}
-                  {selectedMember.wedding_anniversary &&
-                    selectedMember.wedding_anniversary !== "NA" && (
+                  {modalMember.wedding_anniversary &&
+                    modalMember.wedding_anniversary !== "NA" && (
                       <View style={styles.infoRow}>
                         <Ionicons name="gift" size={20} color="#A32638" />
                         <Text style={styles.infoText}>
-                          {formatDate(selectedMember.wedding_anniversary)}
+                          {formatDate(modalMember.wedding_anniversary)}
                         </Text>
                       </View>
                     )}
-                  {selectedMember.date_of_birth &&
-                    selectedMember.date_of_birth !== "NA" && (
+                  {modalMember.date_of_birth &&
+                    modalMember.date_of_birth !== "NA" && (
                       <View style={styles.infoRow}>
                         <Ionicons name="calendar" size={20} color="#A32638" />
                         <Text style={styles.infoText}>
-                          {formatDate(selectedMember.date_of_birth)}
+                          {formatDate(modalMember.date_of_birth)}
                         </Text>
                       </View>
                     )}
-                  {selectedMember.residential_address &&
-                    selectedMember.residential_address !== "NA" && (
+                  {modalMember.residential_address &&
+                    modalMember.residential_address !== "NA" && (
                       <View style={styles.infoRow}>
                         <Ionicons name="home" size={20} color="#A32638" />
                         <Text style={styles.infoText}>
-                          {selectedMember.residential_address}
+                          {modalMember.residential_address}
                         </Text>
                       </View>
                     )}
@@ -476,35 +501,35 @@ const DirectoryScreen = () => {
               <View style={styles.sectionSeparator} />
 
               {/* Emergency Contact */}
-              {selectedMember.emergency_contact_name &&
-                selectedMember.emergency_contact_name !== "NA" && (
+              {modalMember.emergency_contact_name &&
+                modalMember.emergency_contact_name !== "NA" && (
                   <Text style={styles.sectionTitle}>Emergency Contact</Text>
                 )}
-              {selectedMember.emergency_contact_name &&
-                selectedMember.emergency_contact_name !== "NA" && (
+              {modalMember.emergency_contact_name &&
+                modalMember.emergency_contact_name !== "NA" && (
                   <View style={styles.infoSection}>
                     <View style={styles.infoRow}>
                       <Ionicons name="alert-circle" size={20} color="#A32638" />
                       <Text style={styles.infoText}>
-                        {selectedMember.emergency_contact_name}
+                        {modalMember.emergency_contact_name}
                       </Text>
                     </View>
-                    {selectedMember.emergency_contact_relationship &&
-                      selectedMember.emergency_contact_relationship !==
+                    {modalMember.emergency_contact_relationship &&
+                      modalMember.emergency_contact_relationship !==
                         "NA" && (
                         <View style={styles.infoRow}>
                           <Ionicons name="people" size={20} color="#A32638" />
                           <Text style={styles.infoText}>
-                            {selectedMember.emergency_contact_relationship}
+                            {modalMember.emergency_contact_relationship}
                           </Text>
                         </View>
                       )}
-                    {selectedMember.emergency_contact_phone &&
-                      selectedMember.emergency_contact_phone !== "NA" && (
+                    {modalMember.emergency_contact_phone &&
+                      modalMember.emergency_contact_phone !== "NA" && (
                         <View style={styles.infoRow}>
                           <Ionicons name="call" size={20} color="#A32638" />
                           <Text style={styles.infoText}>
-                            {parseInt(selectedMember.emergency_contact_phone)}
+                            {parseInt(modalMember.emergency_contact_phone)}
                           </Text>
                         </View>
                       )}
@@ -514,21 +539,21 @@ const DirectoryScreen = () => {
               <View style={styles.sectionSeparator} />
 
               {/* Preferences */}
-              {selectedMember.shirt_size &&
-                selectedMember.shirt_size !== "NA" && (
+              {modalMember.shirt_size &&
+                modalMember.shirt_size !== "NA" && (
                   <Text style={styles.sectionTitle}>Preferences</Text>
                 )}
-              {selectedMember.shirt_size &&
-                selectedMember.shirt_size !== "NA" && (
+              {modalMember.shirt_size &&
+                modalMember.shirt_size !== "NA" && (
                   <View style={styles.infoSection}>
                     <View style={styles.infoRow}>
                       <Ionicons name="shirt" size={20} color="#A32638" />
                       <Text style={styles.infoText}>
-                        {selectedMember.shirt_size}
+                        {modalMember.shirt_size}
                       </Text>
                     </View>
-                    {selectedMember.t_shirt_size &&
-                      selectedMember.t_shirt_size !== "NA" && (
+                    {modalMember.t_shirt_size &&
+                      modalMember.t_shirt_size !== "NA" && (
                         <View style={styles.infoRow}>
                           <Ionicons
                             name="shirt-outline"
@@ -536,12 +561,12 @@ const DirectoryScreen = () => {
                             color="#A32638"
                           />
                           <Text style={styles.infoText}>
-                            {selectedMember.t_shirt_size}
+                            {modalMember.t_shirt_size}
                           </Text>
                         </View>
                       )}
-                    {selectedMember.meal_preference &&
-                      selectedMember.meal_preference !== "NA" && (
+                    {modalMember.meal_preference &&
+                      modalMember.meal_preference !== "NA" && (
                         <View style={styles.infoRow}>
                           <Ionicons
                             name="restaurant"
@@ -549,12 +574,15 @@ const DirectoryScreen = () => {
                             color="#A32638"
                           />
                           <Text style={styles.infoText}>
-                            {selectedMember.meal_preference}
+                            {modalMember.meal_preference}
                           </Text>
                         </View>
                       )}
                   </View>
                 )}
+
+                {loadingMemberSingle && <ActivityIndicator />}
+
             </ScrollView>
           </View>
         </View>
