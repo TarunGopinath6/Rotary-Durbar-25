@@ -103,7 +103,7 @@ const ItineraryScreen = () => {
             endTime: formattedEndTime,
           });
         } else if (
-          moment(startTime).hour() > 12 &&
+          moment(startTime).hour() >= 12 &&
           moment(startTime).hour() < 16
         ) {
           finalData[1].events.push({
