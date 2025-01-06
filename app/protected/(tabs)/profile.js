@@ -10,11 +10,16 @@ import {
   TouchableOpacity,
   Platform,
   Linking,
+  TextInput,
+  Alert
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import supabase from "@/supabase.js";
+
 
 export default function Profile() {
-  const { userData } = useContext(AppContext);
+  const { userData, headerData, setUserData } = useContext(AppContext);
+  const [transactionID, setTransactionID] = useState("");
 
   const formatClubName = (name) => {
     const words = name.split(" ");
@@ -60,6 +65,36 @@ export default function Profile() {
     });
   };
 
+  async function updateTransactionId() {
+    try {
+      // Update the transaction ID for the given member ID
+      const { data: dataUpdate, error: errorUpdate } = await supabase
+        .from('members') // Replace with your table name
+        .update({ transaction_id: transactionID }) // Replace with your column name
+        .eq('id', userData?.id); // Match the specific member_id
+
+      if (errorUpdate) {
+        throw new Error(`Error updating transaction_id: ${errorUpdate.message}`);
+      }
+
+      const { data: userDoc, error: errorRead } = await supabase
+        .from('members') // Replace with your table name
+        .select("*")
+        .eq('id', userData?.id)
+        .single();
+
+      if (errorRead) {
+        throw new Error(`Error updating transaction_id: ${errorRead.message}`);
+      }
+
+      setUserData({ id: userDoc.id, ...userDoc });
+      Alert.alert('Transaction ID updated successfully')
+    } catch (err) {
+      console.log(err);
+      Alert.alert('Failed to update transaction ID');
+    }
+  }
+
   return (
     <View style={styles.container}>
       <View
@@ -102,6 +137,25 @@ export default function Profile() {
           </View>
 
           <View style={styles.modalSeparator} />
+
+          <Text>{headerData?.bank_details ?? ""}</Text>
+          <Text>{headerData?.upi_id ?? ""}</Text>
+          <Text>Current Transaction ID: {userData?.transaction_id ?? "NA"}</Text>
+
+          <TextInput
+            placeholder="Enter Transaction ID"
+            placeholderTextColor="#666"
+            value={transactionID}
+            onChangeText={setTransactionID}
+            style={{ borderWidth: 1 }}
+          />
+
+          <TouchableOpacity
+            style={{ backgroundColor: "lightblue", padding: 10 }}
+            onPress={updateTransactionId}
+          >
+            <Text>Input Transaction ID</Text>
+          </TouchableOpacity>
 
           <View
             style={[styles.actionButtonsTop, { textTransform: "capitalize" }]}

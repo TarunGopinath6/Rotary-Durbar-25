@@ -222,6 +222,8 @@ const App = () => {
           </View>
         )}
 
+        <Text>{headerData?.governor_message ?? ""}</Text>
+
         {/* Durbar Drum Section */}
         {notifs.length > 0 && (
           <View style={styles.drumContainer}>
