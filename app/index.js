@@ -19,13 +19,7 @@ export default function Index() {
             .eq("id", user.uid) // Replace 'id' with your primary key in the 'members' table
             .single();
 
-          const { data: headerDoc, error: errorHeaderDoc } = await supabase
-            .from("internal")
-            .select("*")
-            .eq("active", true)
-            .single();
-
-          if (errorUserDoc || errorHeaderDoc || !userDoc) {
+          if (errorUserDoc || !userDoc) {
             console.error(
               "Error fetching user data or user does not exist:",
               error

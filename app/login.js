@@ -20,6 +20,8 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/firebaseConfig";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import supabase from "@/supabase.js";
+
 // import { StatusBar } from "react-native";
 
 export default function Index() {
@@ -62,14 +64,23 @@ export default function Index() {
         password
       );
       console.log("User logged in:", userCredential.user);
-      clearTimeout(timeout); // Clear timeout if request completes in time
-      const userRef = doc(db, "users", userCredential.user.uid);
-      const userDoc = await getDoc(userRef);
-      if (userDoc.exists() === true) {
+      
+      const { data: userDoc, error: errorUserDoc } = await supabase
+        .from("members")
+        .select("*")
+        .eq("id", userCredential.user.uid) // Replace 'id' with your primary key in the 'members' table
+        .single();
+
+      if (errorUserDoc)
+        throw errorUserDoc;
+      
+      if (userDoc) {
         router.push("/protected");
       } else {
         Alert.alert("Error", "User is inactive or disabled.");
       }
+
+      clearTimeout(timeout); // Clear timeout if request completes in time
     } catch (error) {
       console.error("Login error:", error.message);
       let errorMessage = "An error occurred. Please try again.";
