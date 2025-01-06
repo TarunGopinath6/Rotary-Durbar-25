@@ -477,6 +477,9 @@ const DirectoryScreen = () => {
 
               <View style={styles.sectionSeparator} />
 
+              <Text>{modalMember.blood_group}</Text>
+              
+
               {/* Personal Information */}
               {modalMember.sex && modalMember.sex !== "NA" && (
                 <Text style={styles.sectionTitle}>Personal</Text>
