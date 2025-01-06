@@ -11,15 +11,26 @@ import {
   Platform,
   Linking,
   TextInput,
-  Alert
+  Alert,
+  Clipboard,
+  StatusBar,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import supabase from "@/supabase.js";
 
-
 export default function Profile() {
   const { userData, headerData, setUserData } = useContext(AppContext);
   const [transactionID, setTransactionID] = useState("");
+  const [bankDetailsCopied, setBankDetailsCopied] = useState(false);
+  const [upiCopied, setUpiCopied] = useState(false);
+
+  const handleCopy = (text, setCopiedState) => {
+    Clipboard.setString(text);
+    setCopiedState(true);
+    setTimeout(() => {
+      setCopiedState(false);
+    }, 2000); // Reset after 2 seconds
+  };
 
   const formatClubName = (name) => {
     const words = name.split(" ");
@@ -69,18 +80,20 @@ export default function Profile() {
     try {
       // Update the transaction ID for the given member ID
       const { data: dataUpdate, error: errorUpdate } = await supabase
-        .from('members') // Replace with your table name
+        .from("members") // Replace with your table name
         .update({ transaction_id: transactionID }) // Replace with your column name
-        .eq('id', userData?.id); // Match the specific member_id
+        .eq("id", userData?.id); // Match the specific member_id
 
       if (errorUpdate) {
-        throw new Error(`Error updating transaction_id: ${errorUpdate.message}`);
+        throw new Error(
+          `Error updating transaction_id: ${errorUpdate.message}`
+        );
       }
 
       const { data: userDoc, error: errorRead } = await supabase
-        .from('members') // Replace with your table name
+        .from("members") // Replace with your table name
         .select("*")
-        .eq('id', userData?.id)
+        .eq("id", userData?.id)
         .single();
 
       if (errorRead) {
@@ -88,57 +101,63 @@ export default function Profile() {
       }
 
       setUserData({ id: userDoc.id, ...userDoc });
-      Alert.alert('Transaction ID updated successfully')
+      Alert.alert("Transaction ID updated successfully");
     } catch (err) {
       console.log(err);
-      Alert.alert('Failed to update transaction ID');
+      Alert.alert("Failed to update transaction ID");
     }
   }
 
   return (
-    <View style={styles.container}>
-      <View
-        style={[
-          styles.header,
-          {
-            height: Platform.OS === "ios" ? 160 : 120,
-            paddingTop: Platform.OS === "ios" ? 30 : 0,
-          },
-        ]}
-      >
-        <Image
-          source={require("../../../assets/images/mysore_palace.png")}
-          style={styles.headerImage}
-        />
-        <Text style={styles.headerText}>Profile</Text>
-      </View>
-      <View style={styles.scrollContent}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingTop: Platform.OS === "ios" ? 60 : 30 },
+    <>
+      <StatusBar
+        backgroundColor="#A32638"
+        barStyle="light-content"
+        translucent={false}
+      />
+      <View style={styles.container}>
+        <View
+          style={[
+            styles.header,
+            {
+              height: Platform.OS === "ios" ? 160 : 120,
+              paddingTop: Platform.OS === "ios" ? 30 : 0,
+            },
           ]}
-          bounces={true}
         >
           <Image
-            source={{ uri: userData.photograph }}
-            style={styles.modalImage}
-            defaultSource={require("../../../assets/images/rotary_logo.png")}
+            source={require("../../../assets/images/mysore_palace.png")}
+            style={styles.headerImage}
           />
-          <Text style={styles.modalName}>{userData.name}</Text>
-          <View style={styles.clubNameContainer}>
-            {clubName.firstLine && (
-              <Text style={styles.modalClubName}>{clubName.firstLine}</Text>
-            )}
-            {clubName.secondLine && clubName.secondLine !== "NA" && (
-              <Text style={styles.modalClubName}>{clubName.secondLine}</Text>
-            )}
-          </View>
+          <Text style={styles.headerText}>Profile</Text>
+        </View>
+        <View style={styles.scrollContent}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingTop: Platform.OS === "ios" ? 60 : 30 },
+            ]}
+            bounces={true}
+          >
+            <Image
+              source={{ uri: userData.photograph }}
+              style={styles.modalImage}
+              defaultSource={require("../../../assets/images/rotary_logo.png")}
+            />
+            <Text style={styles.modalName}>{userData.name}</Text>
+            <View style={styles.clubNameContainer}>
+              {clubName.firstLine && (
+                <Text style={styles.modalClubName}>{clubName.firstLine}</Text>
+              )}
+              {clubName.secondLine && clubName.secondLine !== "NA" && (
+                <Text style={styles.modalClubName}>{clubName.secondLine}</Text>
+              )}
+            </View>
 
-          <View style={styles.modalSeparator} />
+            <View style={styles.modalSeparator} />
 
-          <Text>{headerData?.bank_details ?? ""}</Text>
+            {/* <Text>{headerData?.bank_details ?? ""}</Text>
           <Text>{headerData?.upi_id ?? ""}</Text>
           <Text>Current Transaction ID: {userData?.transaction_id ?? "NA"}</Text>
 
@@ -155,276 +174,401 @@ export default function Profile() {
             onPress={updateTransactionId}
           >
             <Text>Input Transaction ID</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
-          <View
-            style={[styles.actionButtonsTop, { textTransform: "capitalize" }]}
-          >
-            {userData.phone && userData.phone !== "NA" && (
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => handleCall(parseInt(userData.phone))}
-              >
-                <Ionicons name="call" size={24} color="#A32638" />
-              </TouchableOpacity>
-            )}
-            {userData.email && userData.email !== "NA" && (
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => handleEmail(userData.email)}
-              >
-                <Ionicons name="mail" size={24} color="#A32638" />
-              </TouchableOpacity>
-            )}
-            {userData.business_address &&
-              userData.business_address !== "NA" && (
+            <View
+              style={[styles.actionButtonsTop, { textTransform: "capitalize" }]}
+            >
+              {userData.phone && userData.phone !== "NA" && (
                 <TouchableOpacity
                   style={styles.iconButton}
-                  onPress={() => handleMaps(userData.business_address)}
+                  onPress={() => handleCall(parseInt(userData.phone))}
                 >
-                  <Ionicons name="location" size={24} color="#A32638" />
+                  <Ionicons name="call" size={24} color="#A32638" />
                 </TouchableOpacity>
               )}
-          </View>
-
-          {userData.emergency_contact_phone &&
-            userData.emergency_contact_phone !== "NA" && (
-              <TouchableOpacity
-                style={styles.emergencyButton}
-                onPress={() =>
-                  handleCall(parseInt(userData.emergency_contact_phone))
-                }
-              >
-                <Text style={styles.emergencyText}>Emergency</Text>
-              </TouchableOpacity>
-            )}
-
-          {userData.rotarian_since && userData.rotarian_since !== "NA" && (
-            <Text style={styles.sectionTitle}>Rotary</Text>
-          )}
-          {/* Rotary Information */}
-          {userData.rotarian_since && userData.rotarian_since !== "NA" && (
-            <View style={styles.infoSection}>
-              <View style={styles.infoRow}>
-                <Image
-                  source={require("../../../assets/images/cheer_icon.png")}
-                  style={[styles.rotaryIcon, { tintColor: "#A32638" }]}
-                />
-                <Text style={styles.infoText}>{userData.rotarian_since}</Text>
-              </View>
-              {userData.rotary_foundation_title &&
-                userData.rotary_foundation_title !== "NA" && (
-                  <View style={styles.infoRow}>
-                    <Ionicons name="ribbon" size={20} color="#A32638" />
-                    <Text style={styles.infoText}>
-                      {userData.rotary_foundation_title}
-                    </Text>
-                  </View>
+              {userData.email && userData.email !== "NA" && (
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => handleEmail(userData.email)}
+                >
+                  <Ionicons name="mail" size={24} color="#A32638" />
+                </TouchableOpacity>
+              )}
+              {userData.business_address &&
+                userData.business_address !== "NA" && (
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => handleMaps(userData.business_address)}
+                  >
+                    <Ionicons name="location" size={24} color="#A32638" />
+                  </TouchableOpacity>
                 )}
             </View>
-          )}
 
-          <View style={styles.sectionSeparator} />
-
-          {/* Business Information */}
-          {userData.company_name && userData.company_name !== "NA" && (
-            <Text style={styles.sectionTitle}>Business</Text>
-          )}
-          {userData.company_name && userData.company_name !== "NA" && (
-            <View style={styles.infoSection}>
-              <View style={styles.infoRow}>
-                <Ionicons name="business" size={20} color="#A32638" />
-                <Text
-                  style={[styles.infoText, { fontFamily: "Inter_600SemiBold" }]}
+            {userData.emergency_contact_phone &&
+              userData.emergency_contact_phone !== "NA" && (
+                <TouchableOpacity
+                  style={styles.emergencyButton}
+                  onPress={() =>
+                    handleCall(parseInt(userData.emergency_contact_phone))
+                  }
                 >
-                  {userData.company_name}
-                </Text>
-              </View>
-              {userData.designation && userData.designation !== "NA" && (
+                  <Text style={styles.emergencyText}>Emergency</Text>
+                </TouchableOpacity>
+              )}
+
+            {userData.rotarian_since && userData.rotarian_since !== "NA" && (
+              <Text style={styles.sectionTitle}>Rotary</Text>
+            )}
+            {/* Rotary Information */}
+            {userData.rotarian_since && userData.rotarian_since !== "NA" && (
+              <View style={styles.infoSection}>
                 <View style={styles.infoRow}>
-                  <Ionicons name="person-circle" size={20} color="#fff" />
+                  <Image
+                    source={require("../../../assets/images/cheer_icon.png")}
+                    style={[styles.rotaryIcon, { tintColor: "#A32638" }]}
+                  />
+                  <Text style={styles.infoText}>{userData.rotarian_since}</Text>
+                </View>
+                {userData.rotary_foundation_title &&
+                  userData.rotary_foundation_title !== "NA" && (
+                    <View style={styles.infoRow}>
+                      <Ionicons name="ribbon" size={20} color="#A32638" />
+                      <Text style={styles.infoText}>
+                        {userData.rotary_foundation_title}
+                      </Text>
+                    </View>
+                  )}
+              </View>
+            )}
+
+            <View style={styles.sectionSeparator} />
+
+            {/* Business Information */}
+            {userData.company_name && userData.company_name !== "NA" && (
+              <Text style={styles.sectionTitle}>Business</Text>
+            )}
+            {userData.company_name && userData.company_name !== "NA" && (
+              <View style={styles.infoSection}>
+                <View style={styles.infoRow}>
+                  <Ionicons name="business" size={20} color="#A32638" />
                   <Text
                     style={[
                       styles.infoText,
                       { fontFamily: "Inter_600SemiBold" },
                     ]}
                   >
-                    {userData.designation}
+                    {userData.company_name}
                   </Text>
                 </View>
-              )}
-              {userData.type_of_business &&
-                userData.type_of_business !== "NA" && (
+                {userData.designation && userData.designation !== "NA" && (
                   <View style={styles.infoRow}>
-                    <Ionicons name="briefcase" size={20} color="#fff" />
-                    <Text style={styles.infoText}>
-                      {userData.type_of_business}
+                    <Ionicons name="person-circle" size={20} color="#fff" />
+                    <Text
+                      style={[
+                        styles.infoText,
+                        { fontFamily: "Inter_600SemiBold" },
+                      ]}
+                    >
+                      {userData.designation}
                     </Text>
                   </View>
                 )}
-              {userData.company_sector && userData.company_sector !== "NA" && (
-                <View style={styles.infoRow}>
-                  <Ionicons name="layers" size={20} color="#fff" />
-                  <Text style={styles.infoText}>{userData.company_sector}</Text>
-                </View>
-              )}
-              {userData.about_your_business &&
-                userData.about_your_business !== "NA" && (
-                  <View style={styles.infoRow}>
-                    <Ionicons
-                      name="information-circle"
-                      size={20}
-                      color="#fff"
-                    />
-                    <Text style={styles.infoText}>
-                      {userData.about_your_business}
-                    </Text>
-                  </View>
-                )}
-              {userData.business_address &&
-                userData.business_address !== "NA" && (
-                  <View style={styles.infoRow}>
-                    <Ionicons name="location" size={20} color="#A32638" />
-                    <Text style={styles.infoText}>
-                      {userData.business_address}
-                    </Text>
-                  </View>
-                )}
-              {userData.business_website &&
-                userData.business_website !== "NA" && (
-                  <TouchableOpacity
-                    style={styles.infoRow}
-                    onPress={() => handleWebsite(userData.business_website)}
-                  >
-                    <Ionicons name="globe" size={20} color="#A32638" />
-                    <Text style={[styles.infoText, styles.linkText]}>
-                      {userData.business_website}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-            </View>
-          )}
-
-          <View style={styles.sectionSeparator} />
-
-          {/* Personal Information */}
-          {userData.sex && userData.sex !== "NA" && (
-            <Text style={styles.sectionTitle}>Personal</Text>
-          )}
-          {userData.sex && userData.sex !== "NA" && (
-            <View style={styles.infoSection}>
-              <View style={styles.infoRow}>
-                <Ionicons name="person" size={20} color="#A32638" />
-                <Text style={styles.infoText}>{userData.sex}</Text>
+                {userData.type_of_business &&
+                  userData.type_of_business !== "NA" && (
+                    <View style={styles.infoRow}>
+                      <Ionicons name="briefcase" size={20} color="#fff" />
+                      <Text style={styles.infoText}>
+                        {userData.type_of_business}
+                      </Text>
+                    </View>
+                  )}
+                {userData.company_sector &&
+                  userData.company_sector !== "NA" && (
+                    <View style={styles.infoRow}>
+                      <Ionicons name="layers" size={20} color="#fff" />
+                      <Text style={styles.infoText}>
+                        {userData.company_sector}
+                      </Text>
+                    </View>
+                  )}
+                {userData.about_your_business &&
+                  userData.about_your_business !== "NA" && (
+                    <View style={styles.infoRow}>
+                      <Ionicons
+                        name="information-circle"
+                        size={20}
+                        color="#fff"
+                      />
+                      <Text style={styles.infoText}>
+                        {userData.about_your_business}
+                      </Text>
+                    </View>
+                  )}
+                {userData.business_address &&
+                  userData.business_address !== "NA" && (
+                    <View style={styles.infoRow}>
+                      <Ionicons name="location" size={20} color="#A32638" />
+                      <Text style={styles.infoText}>
+                        {userData.business_address}
+                      </Text>
+                    </View>
+                  )}
+                {userData.business_website &&
+                  userData.business_website !== "NA" && (
+                    <TouchableOpacity
+                      style={styles.infoRow}
+                      onPress={() => handleWebsite(userData.business_website)}
+                    >
+                      <Ionicons name="globe" size={20} color="#A32638" />
+                      <Text style={[styles.infoText, styles.linkText]}>
+                        {userData.business_website}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
               </View>
-              {userData.spouses_name && userData.spouses_name !== "NA" && (
-                <View style={styles.infoRow}>
-                  <Ionicons name="heart" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>{userData.spouses_name}</Text>
-                </View>
-              )}
-              {userData.wedding_anniversary &&
-                userData.wedding_anniversary !== "NA" && (
-                  <View style={styles.infoRow}>
-                    <Ionicons name="gift" size={20} color="#A32638" />
-                    <Text style={styles.infoText}>
-                      {formatDate(userData.wedding_anniversary)}
-                    </Text>
-                  </View>
-                )}
-              {userData.date_of_birth && userData.date_of_birth !== "NA" && (
-                <View style={styles.infoRow}>
-                  <Ionicons name="calendar" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {formatDate(userData.date_of_birth)}
-                  </Text>
-                </View>
-              )}
-              {userData.residential_address &&
-                userData.residential_address !== "NA" && (
-                  <View style={styles.infoRow}>
-                    <Ionicons name="home" size={20} color="#A32638" />
-                    <Text style={styles.infoText}>
-                      {userData.residential_address}
-                    </Text>
-                  </View>
-                )}
-            </View>
-          )}
-
-          <View style={styles.sectionSeparator} />
-
-          {/* Emergency Contact */}
-          {userData.emergency_contact_name &&
-            userData.emergency_contact_name !== "NA" && (
-              <Text style={styles.sectionTitle}>Emergency Contact</Text>
             )}
-          {userData.emergency_contact_name &&
-            userData.emergency_contact_name !== "NA" && (
+
+            <View style={styles.sectionSeparator} />
+
+            {/* Personal Information */}
+            {userData.sex && userData.sex !== "NA" && (
+              <Text style={styles.sectionTitle}>Personal</Text>
+            )}
+            {userData.sex && userData.sex !== "NA" && (
               <View style={styles.infoSection}>
                 <View style={styles.infoRow}>
-                  <Ionicons name="alert-circle" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>
-                    {userData.emergency_contact_name}
-                  </Text>
+                  <Ionicons name="person" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>{userData.sex}</Text>
                 </View>
-                {userData.emergency_contact_relationship &&
-                  userData.emergency_contact_relationship !== "NA" && (
+                {userData.spouses_name && userData.spouses_name !== "NA" && (
+                  <View style={styles.infoRow}>
+                    <Ionicons name="heart" size={20} color="#A32638" />
+                    <Text style={styles.infoText}>{userData.spouses_name}</Text>
+                  </View>
+                )}
+                {userData.wedding_anniversary &&
+                  userData.wedding_anniversary !== "NA" && (
                     <View style={styles.infoRow}>
-                      <Ionicons name="people" size={20} color="#A32638" />
+                      <Ionicons name="gift" size={20} color="#A32638" />
                       <Text style={styles.infoText}>
-                        {userData.emergency_contact_relationship}
+                        {formatDate(userData.wedding_anniversary)}
                       </Text>
                     </View>
                   )}
-                {userData.emergency_contact_phone &&
-                  userData.emergency_contact_phone !== "NA" && (
+                {userData.date_of_birth && userData.date_of_birth !== "NA" && (
+                  <View style={styles.infoRow}>
+                    <Ionicons name="calendar" size={20} color="#A32638" />
+                    <Text style={styles.infoText}>
+                      {formatDate(userData.date_of_birth)}
+                    </Text>
+                  </View>
+                )}
+                {userData.residential_address &&
+                  userData.residential_address !== "NA" && (
                     <View style={styles.infoRow}>
-                      <Ionicons name="call" size={20} color="#A32638" />
+                      <Ionicons name="home" size={20} color="#A32638" />
                       <Text style={styles.infoText}>
-                        {parseInt(userData.emergency_contact_phone)}
+                        {userData.residential_address}
                       </Text>
                     </View>
                   )}
               </View>
             )}
 
-          <View style={styles.sectionSeparator} />
+            <View style={styles.sectionSeparator} />
 
-          {/* Preferences */}
-          {userData.shirt_size && userData.shirt_size !== "NA" && (
-            <Text style={styles.sectionTitle}>Preferences</Text>
-          )}
-          {userData.shirt_size && userData.shirt_size !== "NA" && (
-            <View style={styles.infoSection}>
-              <View style={styles.infoRow}>
-                <Ionicons name="shirt" size={20} color="#A32638" />
-                <Text style={styles.infoText}>{userData.shirt_size}</Text>
-              </View>
-              {userData.t_shirt_size && userData.t_shirt_size !== "NA" && (
-                <View style={styles.infoRow}>
-                  <Ionicons name="shirt-outline" size={20} color="#A32638" />
-                  <Text style={styles.infoText}>{userData.t_shirt_size}</Text>
-                </View>
+            {/* Emergency Contact */}
+            {userData.emergency_contact_name &&
+              userData.emergency_contact_name !== "NA" && (
+                <Text style={styles.sectionTitle}>Emergency Contact</Text>
               )}
-              {userData.meal_preference &&
-                userData.meal_preference !== "NA" && (
+            {userData.emergency_contact_name &&
+              userData.emergency_contact_name !== "NA" && (
+                <View style={styles.infoSection}>
                   <View style={styles.infoRow}>
-                    <Ionicons name="restaurant" size={20} color="#A32638" />
+                    <Ionicons name="alert-circle" size={20} color="#A32638" />
                     <Text style={styles.infoText}>
-                      {userData.meal_preference}
+                      {userData.emergency_contact_name}
                     </Text>
                   </View>
+                  {userData.emergency_contact_relationship &&
+                    userData.emergency_contact_relationship !== "NA" && (
+                      <View style={styles.infoRow}>
+                        <Ionicons name="people" size={20} color="#A32638" />
+                        <Text style={styles.infoText}>
+                          {userData.emergency_contact_relationship}
+                        </Text>
+                      </View>
+                    )}
+                  {userData.emergency_contact_phone &&
+                    userData.emergency_contact_phone !== "NA" && (
+                      <View style={styles.infoRow}>
+                        <Ionicons name="call" size={20} color="#A32638" />
+                        <Text style={styles.infoText}>
+                          {parseInt(userData.emergency_contact_phone)}
+                        </Text>
+                      </View>
+                    )}
+                </View>
+              )}
+
+            <View style={styles.sectionSeparator} />
+
+            {/* Preferences */}
+            {userData.shirt_size && userData.shirt_size !== "NA" && (
+              <Text style={styles.sectionTitle}>Preferences</Text>
+            )}
+            {userData.shirt_size && userData.shirt_size !== "NA" && (
+              <View style={styles.infoSection}>
+                <View style={styles.infoRow}>
+                  <Ionicons name="shirt" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>{userData.shirt_size}</Text>
+                </View>
+                {userData.t_shirt_size && userData.t_shirt_size !== "NA" && (
+                  <View style={styles.infoRow}>
+                    <Ionicons name="shirt-outline" size={20} color="#A32638" />
+                    <Text style={styles.infoText}>{userData.t_shirt_size}</Text>
+                  </View>
                 )}
+                {userData.meal_preference &&
+                  userData.meal_preference !== "NA" && (
+                    <View style={styles.infoRow}>
+                      <Ionicons name="restaurant" size={20} color="#A32638" />
+                      <Text style={styles.infoText}>
+                        {userData.meal_preference}
+                      </Text>
+                    </View>
+                  )}
+              </View>
+            )}
+
+            {/* Place this at the end of your ScrollView, after all other sections */}
+            <View style={styles.sectionSeparator} />
+
+            {/* Transaction Section */}
+            <Text style={styles.sectionTitle}>Payment Details</Text>
+            <View style={styles.infoSection}>
+              {/* Transaction ID Display */}
+              <View style={styles.infoRow}>
+                <Ionicons name="receipt" size={20} color="#A32638" />
+                <Text style={styles.infoText}>
+                  {userData?.transaction_id ?? "No Transaction ID"}
+                </Text>
+              </View>
+
+              {/* Transaction ID Input */}
+              <View style={styles.transactionInputContainer}>
+                <TextInput
+                  placeholder="Enter Transaction ID"
+                  placeholderTextColor="#666"
+                  value={transactionID}
+                  onChangeText={setTransactionID}
+                  style={styles.transactionInput}
+                />
+                <TouchableOpacity
+                  style={styles.transactionButton}
+                  onPress={updateTransactionId}
+                >
+                  <Text style={styles.transactionButtonText}>Update</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Bank Details */}
+              {headerData?.bank_details && (
+                <View style={styles.copyableInfoContainer}>
+                  <View style={styles.infoRow}>
+                    <Ionicons name="business" size={20} color="#A32638" />
+                    <Text style={styles.infoText}>
+                      {headerData.bank_details}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.copyButton}
+                    onPress={() =>
+                      handleCopy(headerData.bank_details, setBankDetailsCopied)
+                    }
+                  >
+                    {" "}
+                    <Ionicons
+                      name={bankDetailsCopied ? "checkmark" : "copy"}
+                      size={20}
+                      color="#A32638"
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* UPI ID */}
+              {headerData?.upi_id && (
+                <View style={styles.copyableInfoContainer}>
+                  <View style={styles.infoRow}>
+                    <Ionicons name="phone-portrait" size={20} color="#A32638" />
+                    <Text style={styles.infoText}>{headerData.upi_id}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.copyButton}
+                    onPress={() => handleCopy(headerData.upi_id, setUpiCopied)}
+                  >
+                    <Ionicons
+                      name={upiCopied ? "checkmark" : "copy"}
+                      size={20}
+                      color="#A32638"
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
-          )}
-        </ScrollView>
+          </ScrollView>
+        </View>
       </View>
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  // Add to your existing styles
+  transactionInputContainer: {
+    marginVertical: 10,
+    paddingHorizontal: 10,
+  },
+  transactionInput: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 10,
+    fontFamily: "Inter_400Regular",
+    backgroundColor: "#fff",
+  },
+  transactionButton: {
+    backgroundColor: "#A32638",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  transactionButtonText: {
+    color: "#fff",
+    fontFamily: "Inter_500Medium",
+    fontSize: 16,
+  },
+  copyableInfoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingLeft: 0,
+    paddingRight: 35,
+    marginBottom: 10,
+    marginTop: 5,
+  },
+  copyButton: {
+    padding: 8,
+    marginLeft: 10,
+    borderRadius: 8,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#A32638",
+  },
   listContainer: {
     padding: 15,
     paddingTop: 25,

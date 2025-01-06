@@ -64,16 +64,15 @@ export default function Index() {
         password
       );
       console.log("User logged in:", userCredential.user);
-      
+
       const { data: userDoc, error: errorUserDoc } = await supabase
         .from("members")
         .select("*")
         .eq("id", userCredential.user.uid) // Replace 'id' with your primary key in the 'members' table
         .maybeSingle();
 
-      if (errorUserDoc)
-        throw errorUserDoc;
-      
+      if (errorUserDoc) throw errorUserDoc;
+
       if (userDoc) {
         router.push("/protected");
       } else {

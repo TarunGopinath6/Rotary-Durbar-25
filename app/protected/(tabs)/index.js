@@ -222,7 +222,18 @@ const App = () => {
           </View>
         )}
 
-        <Text>{headerData?.governor_message ?? ""}</Text>
+        {/* <Text>{headerData?.governor_message ?? ""}</Text> */}
+        {headerData?.governor_message && (
+          <View style={styles.governorMessageContainer}>
+            <View style={styles.governorMessageHeader}>
+              <Text style={styles.messageLabel}>Message from</Text>
+              <Text style={styles.governorName}>DGE Rtn. Vinod Sarogi</Text>
+            </View>
+            <Text style={styles.governorMessageText}>
+              {headerData.governor_message.slice(0, 300)}
+            </Text>
+          </View>
+        )}
 
         {/* Durbar Drum Section */}
         {notifs.length > 0 && (
@@ -273,9 +284,6 @@ const App = () => {
             }
           >
             <Text style={styles.postText}>{item.text}</Text>
-            {item.image && (
-              <Image source={{ uri: item.image }} style={styles.postImage} />
-            )}
             {item.link && (
               <Text
                 style={styles.postLink}
@@ -284,6 +292,10 @@ const App = () => {
                 {item.link}
               </Text>
             )}
+            {item.image && (
+              <Image source={{ uri: item.image }} style={styles.postImage} />
+            )}
+
             <View style={styles.postFooter}>
               <View style={styles.cheersContainer}>
                 <Image
@@ -328,6 +340,47 @@ const App = () => {
 const screenHeight = Dimensions.get("window").height;
 
 const styles = StyleSheet.create({
+  governorMessageContainer: {
+    margin: 16,
+    marginTop: 0,
+    padding: 20,
+    paddingBottom: 10,
+    backgroundColor: "#FFF",
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: "#A32638",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  governorMessageHeader: {
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#FFBD1B",
+    alignItems: "center",
+  },
+  messageLabel: {
+    fontSize: 14,
+    color: "#A32638",
+    fontFamily: "Inter_400Regular",
+    marginBottom: 4,
+  },
+  governorName: {
+    fontSize: 18,
+    color: "#A32638",
+    fontFamily: "Inter_600SemiBold",
+  },
+  governorMessageText: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: "#333",
+    fontFamily: "Inter_400Regular",
+    letterSpacing: 0.3,
+    textAlign: "justify",
+  },
   topBackground: {
     position: "absolute",
     top: 0,
@@ -504,8 +557,10 @@ const styles = StyleSheet.create({
   postImage: {
     width: "100%",
     height: 200,
-    resizeMode: "contain",
+    resizeMode: "fill",
     borderRadius: 10,
+    marginVertical: 10,
+    backgroundColor: "#dedede",
   },
   postText: {
     fontSize: 14,
@@ -517,6 +572,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#17458F",
     textDecorationLine: "underline",
+    marginTop: 0,
+    marginBottom: 10,
   },
   postFooter: {
     flexDirection: "row",

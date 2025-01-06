@@ -12,6 +12,7 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  StatusBar,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import {
@@ -194,10 +195,10 @@ const DirectoryScreen = () => {
       let query = supabase
         .from("members")
         .select("*")
-        .eq('id', selectedMember.id)
-  
+        .eq("id", selectedMember.id);
+
       const { data, error } = await query;
-  
+
       if (error) {
         console.error("Error fetching member:", error);
         setModalMember({});
@@ -207,9 +208,9 @@ const DirectoryScreen = () => {
     };
 
     useEffect(() => {
-      fetchMemberSingular()
-    }, [])
-    
+      fetchMemberSingular();
+    }, []);
+
     const InfoRow = ({ icon, text }) => (
       <View style={styles.infoRow}>
         <Ionicons name={icon} size={20} color="#666" style={styles.infoIcon} />
@@ -299,9 +300,7 @@ const DirectoryScreen = () => {
                   modalMember.business_address !== "NA" && (
                     <TouchableOpacity
                       style={styles.iconButton}
-                      onPress={() =>
-                        handleMaps(modalMember.business_address)
-                      }
+                      onPress={() => handleMaps(modalMember.business_address)}
                     >
                       <Ionicons name="location" size={24} color="#A32638" />
                     </TouchableOpacity>
@@ -313,9 +312,7 @@ const DirectoryScreen = () => {
                   <TouchableOpacity
                     style={styles.emergencyButton}
                     onPress={() =>
-                      handleCall(
-                        parseInt(modalMember.emergency_contact_phone)
-                      )
+                      handleCall(parseInt(modalMember.emergency_contact_phone))
                     }
                   >
                     <Text style={styles.emergencyText}>Emergency</Text>
@@ -515,8 +512,7 @@ const DirectoryScreen = () => {
                       </Text>
                     </View>
                     {modalMember.emergency_contact_relationship &&
-                      modalMember.emergency_contact_relationship !==
-                        "NA" && (
+                      modalMember.emergency_contact_relationship !== "NA" && (
                         <View style={styles.infoRow}>
                           <Ionicons name="people" size={20} color="#A32638" />
                           <Text style={styles.infoText}>
@@ -539,50 +535,43 @@ const DirectoryScreen = () => {
               <View style={styles.sectionSeparator} />
 
               {/* Preferences */}
-              {modalMember.shirt_size &&
-                modalMember.shirt_size !== "NA" && (
-                  <Text style={styles.sectionTitle}>Preferences</Text>
-                )}
-              {modalMember.shirt_size &&
-                modalMember.shirt_size !== "NA" && (
-                  <View style={styles.infoSection}>
-                    <View style={styles.infoRow}>
-                      <Ionicons name="shirt" size={20} color="#A32638" />
-                      <Text style={styles.infoText}>
-                        {modalMember.shirt_size}
-                      </Text>
-                    </View>
-                    {modalMember.t_shirt_size &&
-                      modalMember.t_shirt_size !== "NA" && (
-                        <View style={styles.infoRow}>
-                          <Ionicons
-                            name="shirt-outline"
-                            size={20}
-                            color="#A32638"
-                          />
-                          <Text style={styles.infoText}>
-                            {modalMember.t_shirt_size}
-                          </Text>
-                        </View>
-                      )}
-                    {modalMember.meal_preference &&
-                      modalMember.meal_preference !== "NA" && (
-                        <View style={styles.infoRow}>
-                          <Ionicons
-                            name="restaurant"
-                            size={20}
-                            color="#A32638"
-                          />
-                          <Text style={styles.infoText}>
-                            {modalMember.meal_preference}
-                          </Text>
-                        </View>
-                      )}
+              {modalMember.shirt_size && modalMember.shirt_size !== "NA" && (
+                <Text style={styles.sectionTitle}>Preferences</Text>
+              )}
+              {modalMember.shirt_size && modalMember.shirt_size !== "NA" && (
+                <View style={styles.infoSection}>
+                  <View style={styles.infoRow}>
+                    <Ionicons name="shirt" size={20} color="#A32638" />
+                    <Text style={styles.infoText}>
+                      {modalMember.shirt_size}
+                    </Text>
                   </View>
-                )}
+                  {modalMember.t_shirt_size &&
+                    modalMember.t_shirt_size !== "NA" && (
+                      <View style={styles.infoRow}>
+                        <Ionicons
+                          name="shirt-outline"
+                          size={20}
+                          color="#A32638"
+                        />
+                        <Text style={styles.infoText}>
+                          {modalMember.t_shirt_size}
+                        </Text>
+                      </View>
+                    )}
+                  {modalMember.meal_preference &&
+                    modalMember.meal_preference !== "NA" && (
+                      <View style={styles.infoRow}>
+                        <Ionicons name="restaurant" size={20} color="#A32638" />
+                        <Text style={styles.infoText}>
+                          {modalMember.meal_preference}
+                        </Text>
+                      </View>
+                    )}
+                </View>
+              )}
 
-                {loadingMemberSingle && <ActivityIndicator />}
-
+              {loadingMemberSingle && <ActivityIndicator />}
             </ScrollView>
           </View>
         </View>
@@ -591,61 +580,68 @@ const DirectoryScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View
-        style={[
-          styles.header,
-          {
-            height: Platform.OS === "ios" ? 160 : 120,
-            paddingTop: Platform.OS === "ios" ? 30 : 0,
-          },
-        ]}
-      >
-        <Image
-          source={require("../../../assets/images/mysore_palace.png")}
-          style={styles.headerImage}
-        />
-        <Text style={styles.headerText}>Royal Secretaries</Text>
-      </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBox}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search a name, club or business"
-            placeholderTextColor="#666"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-        <TouchableOpacity style={styles.filterButton}>
-          <Text style={styles.filterButtonText}>Filter</Text>
-        </TouchableOpacity>
-      </View>
-
-      <MemberModal />
-
-      {/* Directory Grid */}
-      <FlatList
-        data={members}
-        renderItem={renderDirectoryItem}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.gridRow}
-        showsVerticalScrollIndicator={false}
-        style={styles.grid}
-        nestedScrollEnabled
-        onEndReached={() => {
-          if (hasMore) loadMembers();
-        }}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={() =>
-          loading ? <ActivityIndicator size="small" color="#0000ff" /> : null
-        }
+    <>
+      <StatusBar
+        backgroundColor="#A32638"
+        barStyle="light-content"
+        translucent={false}
       />
-    </View>
+      <View style={styles.container}>
+        {/* Header */}
+        <View
+          style={[
+            styles.header,
+            {
+              height: Platform.OS === "ios" ? 160 : 120,
+              paddingTop: Platform.OS === "ios" ? 30 : 0,
+            },
+          ]}
+        >
+          <Image
+            source={require("../../../assets/images/mysore_palace.png")}
+            style={styles.headerImage}
+          />
+          <Text style={styles.headerText}>Royal Secretaries</Text>
+        </View>
+
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBox}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search a name, club or business"
+              placeholderTextColor="#666"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+          <TouchableOpacity style={styles.filterButton}>
+            <Text style={styles.filterButtonText}>Filter</Text>
+          </TouchableOpacity>
+        </View>
+
+        <MemberModal />
+
+        {/* Directory Grid */}
+        <FlatList
+          data={members}
+          renderItem={renderDirectoryItem}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={styles.gridRow}
+          showsVerticalScrollIndicator={false}
+          style={styles.grid}
+          nestedScrollEnabled
+          onEndReached={() => {
+            if (hasMore) loadMembers();
+          }}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={() =>
+            loading ? <ActivityIndicator size="small" color="#0000ff" /> : null
+          }
+        />
+      </View>
+    </>
   );
 };
 
