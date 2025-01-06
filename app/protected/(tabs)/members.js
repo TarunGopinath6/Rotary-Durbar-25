@@ -237,7 +237,8 @@ const DirectoryScreen = () => {
 
     const openWhatsApp = async (phone) => {
       console.log("Whatsapp Pressed");
-      const cleanNumber = Number(phone.replace(/[^\d]/g, "")) / 10;
+      // const cleanNumber = Number(phone.replace(/[^\d]/g, "")) / 10;
+      const cleanNumber = "+91" + phone;
       console.log(cleanNumber);
       const whatsappUrl = Platform.select({
         ios: `whatsapp://send?phone=${cleanNumber}`,
@@ -323,19 +324,14 @@ const DirectoryScreen = () => {
                     <Ionicons name="mail" size={24} color="#A32638" />
                   </TouchableOpacity>
                 )}
-                {modalMember.business_address &&
-                  modalMember.business_address !== "NA" && (
-                    <TouchableOpacity
-                      style={styles.iconButton}
-                      onPress={() => openWhatsApp(modalMember.phone)}
-                    >
-                      <Ionicons
-                        name="logo-whatsapp"
-                        size={24}
-                        color="#A32638"
-                      />
-                    </TouchableOpacity>
-                  )}
+                {modalMember.phone && modalMember.phone !== "NA" && (
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => openWhatsApp(parseInt(modalMember.phone))}
+                  >
+                    <Ionicons name="logo-whatsapp" size={24} color="#A32638" />
+                  </TouchableOpacity>
+                )}
               </View>
 
               {modalMember.emergency_contact_phone &&
