@@ -63,13 +63,41 @@ export default function Support() {
     Inter_900Black,
   });
 
+  const openWhatsApp = async (phone) => {
+    console.log("Whatsapp Pressed");
+    const cleanNumber = Number(phone.replace(/[^\d]/g, "")) / 10;
+    console.log(cleanNumber);
+    const whatsappUrl = Platform.select({
+      ios: `whatsapp://send?phone=${cleanNumber}`,
+      android: `whatsapp://send?phone=${cleanNumber}`,
+    });
+
+    try {
+      const supported = await Linking.canOpenURL(whatsappUrl);
+      if (supported) {
+        await Linking.openURL(whatsappUrl);
+      } else {
+        const storeUrl = Platform.select({
+          ios: `https://apps.apple.com/app/whatsapp-messenger/id310633997`,
+          android: `market://details?id=com.whatsapp`,
+        });
+        await Linking.openURL(storeUrl);
+      }
+    } catch (error) {
+      console.error("Error opening WhatsApp:", error);
+      Alert.alert("Error", "Error opening Whatsapp");
+    }
+  };
+
   const fetchMembers = async (queryText = "") => {
     let query = supabase
       .from("members")
-      .select("id, sets_designation, affiliation, name, club_name, photograph, phone, email, business_address")
+      .select(
+        "id, sets_designation, affiliation, name, club_name, photograph, phone, email, business_address"
+      )
       .eq("support", true)
       .eq("role", "member")
-      .order("priority", { descending: true });
+      .order("priority", { ascending: false });
 
     if (queryText) {
       query = query.or(
@@ -158,7 +186,7 @@ export default function Support() {
       let query = supabase
         .from("members")
         .select("*")
-        .eq('id', selectedMember.id)
+        .eq("id", selectedMember.id);
 
       const { data, error } = await query;
 
@@ -171,9 +199,9 @@ export default function Support() {
     };
 
     useEffect(() => {
-      console.log('fetch single')
-      fetchMemberSingular()
-    }, [])
+      console.log("fetch single");
+      fetchMemberSingular();
+    }, []);
 
     const InfoRow = ({ icon, text }) => (
       <View style={styles.infoRow}>
@@ -264,11 +292,13 @@ export default function Support() {
                   selectedMember.business_address !== "NA" && (
                     <TouchableOpacity
                       style={styles.iconButton}
-                      onPress={() =>
-                        handleMaps(selectedMember.business_address)
-                      }
+                      onPress={() => openWhatsApp(selectedMember.phone)}
                     >
-                      <Ionicons name="location" size={24} color="#A32638" />
+                      <Ionicons
+                        name="logo-whatsapp"
+                        size={24}
+                        color="#A32638"
+                      />
                     </TouchableOpacity>
                   )}
               </View>
@@ -278,9 +308,7 @@ export default function Support() {
                   <TouchableOpacity
                     style={styles.emergencyButton}
                     onPress={() =>
-                      handleCall(
-                        parseInt(modalMember.emergency_contact_phone)
-                      )
+                      handleCall(parseInt(modalMember.emergency_contact_phone))
                     }
                   >
                     <Text style={styles.emergencyText}>Emergency</Text>
@@ -494,8 +522,7 @@ export default function Support() {
                       </Text>
                     </View>
                     {modalMember.emergency_contact_relationship &&
-                      modalMember.emergency_contact_relationship !==
-                      "NA" && (
+                      modalMember.emergency_contact_relationship !== "NA" && (
                         <View style={styles.infoRow}>
                           <Ionicons name="people" size={20} color="#A32638" />
                           <Text style={styles.infoText}>
@@ -518,50 +545,43 @@ export default function Support() {
               <View style={styles.sectionSeparator} />
 
               {/* Preferences */}
-              {modalMember.shirt_size &&
-                modalMember.shirt_size !== "NA" && (
-                  <Text style={styles.sectionTitle}>Preferences</Text>
-                )}
-              {modalMember.shirt_size &&
-                modalMember.shirt_size !== "NA" && (
-                  <View style={styles.infoSection}>
-                    <View style={styles.infoRow}>
-                      <Ionicons name="shirt" size={20} color="#A32638" />
-                      <Text style={styles.infoText}>
-                        {modalMember.shirt_size}
-                      </Text>
-                    </View>
-                    {modalMember.t_shirt_size &&
-                      modalMember.t_shirt_size !== "NA" && (
-                        <View style={styles.infoRow}>
-                          <Ionicons
-                            name="shirt-outline"
-                            size={20}
-                            color="#A32638"
-                          />
-                          <Text style={styles.infoText}>
-                            {modalMember.t_shirt_size}
-                          </Text>
-                        </View>
-                      )}
-                    {modalMember.meal_preference &&
-                      modalMember.meal_preference !== "NA" && (
-                        <View style={styles.infoRow}>
-                          <Ionicons
-                            name="restaurant"
-                            size={20}
-                            color="#A32638"
-                          />
-                          <Text style={styles.infoText}>
-                            {modalMember.meal_preference}
-                          </Text>
-                        </View>
-                      )}
+              {modalMember.shirt_size && modalMember.shirt_size !== "NA" && (
+                <Text style={styles.sectionTitle}>Preferences</Text>
+              )}
+              {modalMember.shirt_size && modalMember.shirt_size !== "NA" && (
+                <View style={styles.infoSection}>
+                  <View style={styles.infoRow}>
+                    <Ionicons name="shirt" size={20} color="#A32638" />
+                    <Text style={styles.infoText}>
+                      {modalMember.shirt_size}
+                    </Text>
                   </View>
-                )}
+                  {modalMember.t_shirt_size &&
+                    modalMember.t_shirt_size !== "NA" && (
+                      <View style={styles.infoRow}>
+                        <Ionicons
+                          name="shirt-outline"
+                          size={20}
+                          color="#A32638"
+                        />
+                        <Text style={styles.infoText}>
+                          {modalMember.t_shirt_size}
+                        </Text>
+                      </View>
+                    )}
+                  {modalMember.meal_preference &&
+                    modalMember.meal_preference !== "NA" && (
+                      <View style={styles.infoRow}>
+                        <Ionicons name="restaurant" size={20} color="#A32638" />
+                        <Text style={styles.infoText}>
+                          {modalMember.meal_preference}
+                        </Text>
+                      </View>
+                    )}
+                </View>
+              )}
 
-                {loadingMemberSingle && <ActivityIndicator />}
-
+              {loadingMemberSingle && <ActivityIndicator />}
             </ScrollView>
           </View>
         </View>
@@ -613,9 +633,9 @@ export default function Support() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => handleMaps(item.business_address)}
+              onPress={() => openWhatsApp(item.phone)}
             >
-              <Ionicons name="location" size={24} color="#A32638" />
+              <Ionicons name="logo-whatsapp" size={24} color="#A32638" />
             </TouchableOpacity>
           </View>
         </View>
@@ -625,7 +645,6 @@ export default function Support() {
 
   return (
     <View style={styles.container}>
-
       <MemberModal />
 
       {/* Header */}
