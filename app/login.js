@@ -69,7 +69,7 @@ export default function Index() {
         .from("members")
         .select("*")
         .eq("id", userCredential.user.uid) // Replace 'id' with your primary key in the 'members' table
-        .single();
+        .maybeSingle();
 
       if (errorUserDoc)
         throw errorUserDoc;
