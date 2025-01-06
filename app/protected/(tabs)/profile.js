@@ -149,8 +149,16 @@ export default function Profile() {
   }
 
   const handleUPI = () => {
-    const amount = 100;
-    const upiURI = `upi://pay?pa=tarungopinath6@okicici&pn=Tarun%20Gopinath&am=${amount}&aid=uGICAgMDwy9qbGA`;
+    // const amount = 100;
+    // const upiURI = `upi://pay?pa=tarungopinath6@okicici&pn=Tarun%20Gopinath&am=${amount}&aid=uGICAgMDwy9qbGA`;
+
+    let upiURI = null;
+    if (userData?.support === true)
+      upiURI = (headerData?.upi_uri_support ?? "");
+    else
+      upiURI = (headerData?.upi_uri_normal ?? "");
+
+
 
     Alert.alert(
       "Transaction Verification",
@@ -398,6 +406,8 @@ export default function Profile() {
 
             <View style={styles.sectionSeparator} />
 
+            <Text>{userData.blood_group}</Text>
+
             {/* Personal Information */}
             {userData.sex && userData.sex !== "NA" && (
               <Text style={styles.sectionTitle}>Personal</Text>
@@ -514,6 +524,9 @@ export default function Profile() {
             <View style={styles.sectionSeparator} />
 
             {/* Transaction Section */}
+
+            <Text>{userData.support === true ? headerData?.payment_deadline_support : headerData?.payment_deadline_normal}</Text>
+
             <Text style={styles.sectionTitle}>Payment Details</Text>
             <View style={styles.infoSection}>
               {/* Transaction ID Display */}
