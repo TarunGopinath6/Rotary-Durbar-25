@@ -230,7 +230,7 @@ const App = () => {
               <Text style={styles.governorName}>DGE Rtn. Vinod Sarogi</Text>
             </View>
             <Text style={styles.governorMessageText}>
-              {headerData.governor_message.slice(0, 300)}
+              {headerData.governor_message}
             </Text>
           </View>
         )}
@@ -367,11 +367,15 @@ const styles = StyleSheet.create({
     color: "#A32638",
     fontFamily: "Inter_400Regular",
     marginBottom: 4,
+    width: "100%",
+    textAlign: "center",
   },
   governorName: {
     fontSize: 18,
     color: "#A32638",
     fontFamily: "Inter_600SemiBold",
+    width: "100%",
+    textAlign: "center",
   },
   governorMessageText: {
     fontSize: 15,
@@ -379,7 +383,9 @@ const styles = StyleSheet.create({
     color: "#333",
     fontFamily: "Inter_400Regular",
     letterSpacing: 0.3,
-    textAlign: "justify",
+    width: "100%",
+    textAlign: "left",
+    paddingBottom: 5,
   },
   topBackground: {
     position: "absolute",

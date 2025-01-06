@@ -148,13 +148,50 @@ export default function Profile() {
     }
   }
 
+  const formatPaymentDeadline = (dateString) => {
+    const date = new Date(dateString);
+
+    // Get the day with suffix
+    const day = date.getDate();
+    const suffix =
+      day % 10 === 1 && day !== 11
+        ? "st"
+        : day % 10 === 2 && day !== 12
+        ? "nd"
+        : day % 10 === 3 && day !== 13
+        ? "rd"
+        : "th";
+
+    // Format the month and year
+    const options = { month: "long", year: "numeric" };
+    const formattedDate = new Intl.DateTimeFormat("en-US", options).format(
+      date
+    );
+
+    return `${day}${suffix} ${formattedDate}`;
+  };
+
+  // Example usage
+  const dateString = "2025-01-15-T00:00:00+00:00";
+  console.log(formatDate(dateString)); // Output: "15th January, 2025"
+
+  let upiURI = null;
+  if (userData?.support === true) upiURI = headerData?.upi_uri_support ?? "";
+  else upiURI = headerData?.upi_uri_normal ?? "";
+  // Extract the query string (everything after the "?")
+  const queryString = upiURI.split("?")[1];
+
+  // Parse the query string
+  const params = new URLSearchParams(queryString);
+
+  // Get the value of the "am" parameter
+  const amount = params.get("am");
+
   const handleUPI = () => {
     // const amount = 100;
     // const upiURI = `upi://pay?pa=tarungopinath6@okicici&pn=Tarun%20Gopinath&am=${amount}&aid=uGICAgMDwy9qbGA`;
 
-    let upiURI = null;
-    if (userData?.support === true) upiURI = headerData?.upi_uri_support ?? "";
-    else upiURI = headerData?.upi_uri_normal ?? "";
+    console.log(amount); // Output: "100"
 
     Alert.alert(
       "Transaction Verification",
@@ -525,14 +562,20 @@ export default function Profile() {
 
             {/* Transaction Section */}
 
-            <Text>
-              {userData.support === true
-                ? headerData?.payment_deadline_support
-                : headerData?.payment_deadline_normal}
-            </Text>
-
             <Text style={styles.sectionTitle}>Payment Details</Text>
             <View style={styles.infoSection}>
+              <View style={styles.infoRow}>
+                <Ionicons name="alert-circle" size={20} color="#A32638" />
+                <Text style={styles.infoText}>
+                  {userData.support === true
+                    ? formatPaymentDeadline(
+                        headerData?.payment_deadline_support
+                      )
+                    : formatPaymentDeadline(
+                        headerData?.payment_deadline_normal
+                      )}
+                </Text>
+              </View>
               {/* Transaction ID Display */}
               <View style={styles.infoRow}>
                 <Ionicons name="receipt" size={20} color="#A32638" />
@@ -919,7 +962,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingBottom: 80,
+    paddingBottom: 120,
   },
   header: {
     backgroundColor: "#A32638",
