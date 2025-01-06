@@ -477,57 +477,60 @@ const DirectoryScreen = () => {
 
               <View style={styles.sectionSeparator} />
 
-              <Text>{modalMember.blood_group}</Text>
-              
-
               {/* Personal Information */}
-              {modalMember.sex && modalMember.sex !== "NA" && (
-                <Text style={styles.sectionTitle}>Personal</Text>
-              )}
-              {modalMember.sex && modalMember.sex !== "NA" && (
-                <View style={styles.infoSection}>
+              <Text style={styles.sectionTitle}>Personal</Text>
+              <View style={styles.infoSection}>
+                {modalMember.blood_group && modalMember.blood_group != "NA" && (
+                  <View style={styles.infoRow}>
+                    <Ionicons name="water" size={20} color="#A32638" />
+                    <Text style={styles.infoText}>
+                      {modalMember.blood_group}
+                    </Text>
+                  </View>
+                )}
+                {modalMember.sex && modalMember.sex !== "NA" && (
                   <View style={styles.infoRow}>
                     <Ionicons name="person" size={20} color="#A32638" />
                     <Text style={styles.infoText}>{modalMember.sex}</Text>
                   </View>
-                  {modalMember.spouses_name &&
-                    modalMember.spouses_name !== "NA" && (
-                      <View style={styles.infoRow}>
-                        <Ionicons name="heart" size={20} color="#A32638" />
-                        <Text style={styles.infoText}>
-                          {modalMember.spouses_name}
-                        </Text>
-                      </View>
-                    )}
-                  {modalMember.wedding_anniversary &&
-                    modalMember.wedding_anniversary !== "NA" && (
-                      <View style={styles.infoRow}>
-                        <Ionicons name="gift" size={20} color="#A32638" />
-                        <Text style={styles.infoText}>
-                          {formatDate(modalMember.wedding_anniversary)}
-                        </Text>
-                      </View>
-                    )}
-                  {modalMember.date_of_birth &&
-                    modalMember.date_of_birth !== "NA" && (
-                      <View style={styles.infoRow}>
-                        <Ionicons name="calendar" size={20} color="#A32638" />
-                        <Text style={styles.infoText}>
-                          {formatDate(modalMember.date_of_birth)}
-                        </Text>
-                      </View>
-                    )}
-                  {modalMember.residential_address &&
-                    modalMember.residential_address !== "NA" && (
-                      <View style={styles.infoRow}>
-                        <Ionicons name="home" size={20} color="#A32638" />
-                        <Text style={styles.infoText}>
-                          {modalMember.residential_address}
-                        </Text>
-                      </View>
-                    )}
-                </View>
-              )}
+                )}
+                {modalMember.spouses_name &&
+                  modalMember.spouses_name !== "NA" && (
+                    <View style={styles.infoRow}>
+                      <Ionicons name="heart" size={20} color="#A32638" />
+                      <Text style={styles.infoText}>
+                        {modalMember.spouses_name}
+                      </Text>
+                    </View>
+                  )}
+                {modalMember.wedding_anniversary &&
+                  modalMember.wedding_anniversary !== "NA" && (
+                    <View style={styles.infoRow}>
+                      <Ionicons name="gift" size={20} color="#A32638" />
+                      <Text style={styles.infoText}>
+                        {formatDate(modalMember.wedding_anniversary)}
+                      </Text>
+                    </View>
+                  )}
+                {modalMember.date_of_birth &&
+                  modalMember.date_of_birth !== "NA" && (
+                    <View style={styles.infoRow}>
+                      <Ionicons name="calendar" size={20} color="#A32638" />
+                      <Text style={styles.infoText}>
+                        {formatDate(modalMember.date_of_birth)}
+                      </Text>
+                    </View>
+                  )}
+                {modalMember.residential_address &&
+                  modalMember.residential_address !== "NA" && (
+                    <View style={styles.infoRow}>
+                      <Ionicons name="home" size={20} color="#A32638" />
+                      <Text style={styles.infoText}>
+                        {modalMember.residential_address}
+                      </Text>
+                    </View>
+                  )}
+              </View>
 
               <View style={styles.sectionSeparator} />
 

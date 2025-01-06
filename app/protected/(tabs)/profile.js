@@ -153,12 +153,8 @@ export default function Profile() {
     // const upiURI = `upi://pay?pa=tarungopinath6@okicici&pn=Tarun%20Gopinath&am=${amount}&aid=uGICAgMDwy9qbGA`;
 
     let upiURI = null;
-    if (userData?.support === true)
-      upiURI = (headerData?.upi_uri_support ?? "");
-    else
-      upiURI = (headerData?.upi_uri_normal ?? "");
-
-
+    if (userData?.support === true) upiURI = headerData?.upi_uri_support ?? "";
+    else upiURI = headerData?.upi_uri_normal ?? "";
 
     Alert.alert(
       "Transaction Verification",
@@ -406,52 +402,56 @@ export default function Profile() {
 
             <View style={styles.sectionSeparator} />
 
-            <Text>{userData.blood_group}</Text>
-
             {/* Personal Information */}
-            {userData.sex && userData.sex !== "NA" && (
-              <Text style={styles.sectionTitle}>Personal</Text>
-            )}
-            {userData.sex && userData.sex !== "NA" && (
-              <View style={styles.infoSection}>
+            <Text style={styles.sectionTitle}>Personal</Text>
+            <View style={styles.infoSection}>
+              {userData.blood_group && userData.blood_group != "NA" && (
+                <View style={styles.infoRow}>
+                  <Ionicons name="water" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>{userData.blood_group}</Text>
+                </View>
+              )}
+
+              {userData.sex && userData.sex != "NA" && (
                 <View style={styles.infoRow}>
                   <Ionicons name="person" size={20} color="#A32638" />
                   <Text style={styles.infoText}>{userData.sex}</Text>
                 </View>
-                {userData.spouses_name && userData.spouses_name !== "NA" && (
+              )}
+
+              {userData.spouses_name && userData.spouses_name !== "NA" && (
+                <View style={styles.infoRow}>
+                  <Ionicons name="heart" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>{userData.spouses_name}</Text>
+                </View>
+              )}
+              {userData.wedding_anniversary &&
+                userData.wedding_anniversary !== "NA" && (
                   <View style={styles.infoRow}>
-                    <Ionicons name="heart" size={20} color="#A32638" />
-                    <Text style={styles.infoText}>{userData.spouses_name}</Text>
-                  </View>
-                )}
-                {userData.wedding_anniversary &&
-                  userData.wedding_anniversary !== "NA" && (
-                    <View style={styles.infoRow}>
-                      <Ionicons name="gift" size={20} color="#A32638" />
-                      <Text style={styles.infoText}>
-                        {formatDate(userData.wedding_anniversary)}
-                      </Text>
-                    </View>
-                  )}
-                {userData.date_of_birth && userData.date_of_birth !== "NA" && (
-                  <View style={styles.infoRow}>
-                    <Ionicons name="calendar" size={20} color="#A32638" />
+                    <Ionicons name="gift" size={20} color="#A32638" />
                     <Text style={styles.infoText}>
-                      {formatDate(userData.date_of_birth)}
+                      {formatDate(userData.wedding_anniversary)}
                     </Text>
                   </View>
                 )}
-                {userData.residential_address &&
-                  userData.residential_address !== "NA" && (
-                    <View style={styles.infoRow}>
-                      <Ionicons name="home" size={20} color="#A32638" />
-                      <Text style={styles.infoText}>
-                        {userData.residential_address}
-                      </Text>
-                    </View>
-                  )}
-              </View>
-            )}
+              {userData.date_of_birth && userData.date_of_birth !== "NA" && (
+                <View style={styles.infoRow}>
+                  <Ionicons name="calendar" size={20} color="#A32638" />
+                  <Text style={styles.infoText}>
+                    {formatDate(userData.date_of_birth)}
+                  </Text>
+                </View>
+              )}
+              {userData.residential_address &&
+                userData.residential_address !== "NA" && (
+                  <View style={styles.infoRow}>
+                    <Ionicons name="home" size={20} color="#A32638" />
+                    <Text style={styles.infoText}>
+                      {userData.residential_address}
+                    </Text>
+                  </View>
+                )}
+            </View>
 
             <View style={styles.sectionSeparator} />
 
@@ -525,7 +525,11 @@ export default function Profile() {
 
             {/* Transaction Section */}
 
-            <Text>{userData.support === true ? headerData?.payment_deadline_support : headerData?.payment_deadline_normal}</Text>
+            <Text>
+              {userData.support === true
+                ? headerData?.payment_deadline_support
+                : headerData?.payment_deadline_normal}
+            </Text>
 
             <Text style={styles.sectionTitle}>Payment Details</Text>
             <View style={styles.infoSection}>
