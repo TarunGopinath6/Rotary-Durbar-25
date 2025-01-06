@@ -24,12 +24,52 @@ export default function Profile() {
   const [bankDetailsCopied, setBankDetailsCopied] = useState(false);
   const [upiCopied, setUpiCopied] = useState(false);
 
+  const handleBankDetails = (text, setCopiedState) => {
+    Alert.alert(
+      "Transaction Verification",
+      "After completing payment, please copy your transaction ID and paste it in the box above for verification. Click OK to copy Bank Details.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+          onPress: () => console.log("Transaction cancelled"),
+        },
+        {
+          text: "OK",
+          onPress: () => {
+            Clipboard.setString(text);
+            setCopiedState(true);
+            setTimeout(() => {
+              setCopiedState(false);
+            }, 2000); // Reset after 2 seconds
+          },
+        },
+      ]
+    );
+  };
+
   const handleCopy = (text, setCopiedState) => {
-    Clipboard.setString(text);
-    setCopiedState(true);
-    setTimeout(() => {
-      setCopiedState(false);
-    }, 2000); // Reset after 2 seconds
+    Alert.alert(
+      "Transaction Verification",
+      "After completing payment, please copy your transaction ID and paste it in the box above for verification. Click OK to copy UPI ID.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+          onPress: () => console.log("Transaction cancelled"),
+        },
+        {
+          text: "OK",
+          onPress: () => {
+            Clipboard.setString(text);
+            setCopiedState(true);
+            setTimeout(() => {
+              setCopiedState(false);
+            }, 2000); // Reset after 2 seconds
+          },
+        },
+      ]
+    );
   };
 
   const formatClubName = (name) => {
@@ -107,6 +147,32 @@ export default function Profile() {
       Alert.alert("Failed to update transaction ID");
     }
   }
+
+  const handleUPI = () => {
+    const amount = 100;
+    const upiURI = `upi://pay?pa=tarungopinath6@okicici&pn=Tarun%20Gopinath&am=${amount}&aid=uGICAgMDwy9qbGA`;
+
+    Alert.alert(
+      "Transaction Verification",
+      "After completing payment, please copy your transaction ID and paste it in the box above for verification",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+          onPress: () => console.log("Transaction cancelled"),
+        },
+        {
+          text: "OK",
+          onPress: () => {
+            Linking.openURL(upiURI).catch((err) =>
+              Alert.alert("Failed to open UPI app")
+            );
+            console.log("handleUPI");
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <>
@@ -484,10 +550,23 @@ export default function Profile() {
                       {headerData.bank_details}
                     </Text>
                   </View>
+                </View>
+              )}
+              {/* Bank Details */}
+              {headerData?.bank_details && (
+                <View
+                  style={[
+                    styles.copyableInfoContainer,
+                    { justifyContent: "space-around", marginTop: 0 },
+                  ]}
+                >
                   <TouchableOpacity
                     style={styles.copyButton}
                     onPress={() =>
-                      handleCopy(headerData.bank_details, setBankDetailsCopied)
+                      handleBankDetails(
+                        headerData.bank_details,
+                        setBankDetailsCopied
+                      )
                     }
                   >
                     {" "}
@@ -502,17 +581,51 @@ export default function Profile() {
 
               {/* UPI ID */}
               {headerData?.upi_id && (
-                <View style={styles.copyableInfoContainer}>
+                <View style={[styles.copyableInfoContainer, { marginTop: 20 }]}>
                   <View style={styles.infoRow}>
                     <Ionicons name="phone-portrait" size={20} color="#A32638" />
                     <Text style={styles.infoText}>{headerData.upi_id}</Text>
                   </View>
+                  {/* <TouchableOpacity
+                    style={styles.copyButton}
+                    // onPress={() => handleCopy(headerData.upi_id, setUpiCopied)}
+                    onPress={() => handleUPI()}
+                  >
+                    <Ionicons
+                      // name={upiCopied ? "checkmark" : "copy"}
+                      name="cash-outline"
+                      size={20}
+                      color="#A32638"
+                    />
+                  </TouchableOpacity> */}
+                </View>
+              )}
+              {/* UPI ID */}
+              {headerData?.upi_id && (
+                <View
+                  style={[
+                    styles.copyableInfoContainer,
+                    { justifyContent: "space-around", marginTop: 0 },
+                  ]}
+                >
                   <TouchableOpacity
                     style={styles.copyButton}
                     onPress={() => handleCopy(headerData.upi_id, setUpiCopied)}
                   >
                     <Ionicons
                       name={upiCopied ? "checkmark" : "copy"}
+                      size={20}
+                      color="#A32638"
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.copyButton}
+                    // onPress={() => handleCopy(headerData.upi_id, setUpiCopied)}
+                    onPress={() => handleUPI()}
+                  >
+                    <Ionicons
+                      // name={upiCopied ? "checkmark" : "copy"}
+                      name="cash-outline"
                       size={20}
                       color="#A32638"
                     />
@@ -559,7 +672,7 @@ const styles = StyleSheet.create({
     paddingLeft: 0,
     paddingRight: 35,
     marginBottom: 10,
-    marginTop: 5,
+    marginTop: 10,
   },
   copyButton: {
     padding: 8,
@@ -749,6 +862,7 @@ const styles = StyleSheet.create({
   actionButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     marginTop: 10,
   },
   actionButton: {
