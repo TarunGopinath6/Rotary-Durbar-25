@@ -13,6 +13,7 @@ import {
   ScrollView,
   ActivityIndicator,
   StatusBar,
+  Alert,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import {
@@ -234,6 +235,32 @@ const DirectoryScreen = () => {
 
     const clubName = formatClubName(selectedMember.club_name);
 
+    const openWhatsApp = async (phone) => {
+      console.log("Whatsapp Pressed");
+      const cleanNumber = Number(phone.replace(/[^\d]/g, "")) / 10;
+      console.log(cleanNumber);
+      const whatsappUrl = Platform.select({
+        ios: `whatsapp://send?phone=${cleanNumber}`,
+        android: `whatsapp://send?phone=${cleanNumber}`,
+      });
+
+      try {
+        const supported = await Linking.canOpenURL(whatsappUrl);
+        if (supported) {
+          await Linking.openURL(whatsappUrl);
+        } else {
+          const storeUrl = Platform.select({
+            ios: `https://apps.apple.com/app/whatsapp-messenger/id310633997`,
+            android: `market://details?id=com.whatsapp`,
+          });
+          await Linking.openURL(storeUrl);
+        }
+      } catch (error) {
+        console.error("Error opening WhatsApp:", error);
+        Alert.alert("Error", "Error opening Whatsapp");
+      }
+    };
+
     return (
       <Modal
         animationType="fade"
@@ -300,9 +327,13 @@ const DirectoryScreen = () => {
                   modalMember.business_address !== "NA" && (
                     <TouchableOpacity
                       style={styles.iconButton}
-                      onPress={() => handleMaps(modalMember.business_address)}
+                      onPress={() => openWhatsApp(modalMember.phone)}
                     >
-                      <Ionicons name="location" size={24} color="#A32638" />
+                      <Ionicons
+                        name="logo-whatsapp"
+                        size={24}
+                        color="#A32638"
+                      />
                     </TouchableOpacity>
                   )}
               </View>
