@@ -242,7 +242,7 @@ export default function Index() {
               style={styles.termsLink}
               onPress={() =>
                 Linking.openURL(
-                  "https://docs.google.com/document/d/187fIWVSyeHq3YXGkm2Ylmf7LeDAJpwM2703tVwpwYtk/edit?usp=sharing"
+                  "https://drive.google.com/file/d/1SJ1lczJCpVLOvskIyme0yGWGWJ3gEigX/view"
                 )
               }
             >
@@ -253,7 +253,7 @@ export default function Index() {
               style={styles.termsLink}
               onPress={() =>
                 Linking.openURL(
-                  "https://docs.google.com/document/d/1axUBu7SwNgFViQ-jPlrQCyx-kgLE8xKoxROS3A7DDIY/edit?usp=sharing"
+                  "https://drive.google.com/file/d/1BHHJJBvi1hY5MppxFqMIo7n9vpsr0OJ-/view"
                 )
               }
             >
