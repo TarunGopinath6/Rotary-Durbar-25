@@ -135,8 +135,9 @@ const App = () => {
   };
 
   useEffect(() => {
-    fetchPosts();
-  }, [refresh]);
+    if(userData)
+      fetchPosts();
+  }, [refresh, userData]);
 
   // Filtered posts based on active tab
   const filteredPosts = posts.filter((post) => {

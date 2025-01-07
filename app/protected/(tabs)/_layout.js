@@ -421,7 +421,7 @@ const _layout = () => {
   const insets = useSafeAreaInsets();
   const segments = useSegments();
 
-  const [userData, setUserData] = useState({});
+  const [userData, setUserData] = useState(null);
   const [headerData, setHeaderData] = useState({});
 
   const getBottomPadding = () => {
