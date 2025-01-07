@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "icon": "./assets/images/durbar_512_square.png",
+      "icon": "./assets/images/durbar_1024_square.png",
       "supportsTablet": true,
       "bundleIdentifier": "com.dasorakel.rotaryclubdurbar"
     },
