@@ -264,25 +264,6 @@ export default function Profile() {
 
             <View style={styles.modalSeparator} />
 
-            {/* <Text>{headerData?.bank_details ?? ""}</Text>
-          <Text>{headerData?.upi_id ?? ""}</Text>
-          <Text>Current Transaction ID: {userData?.transaction_id ?? "NA"}</Text>
-
-          <TextInput
-            placeholder="Enter Transaction ID"
-            placeholderTextColor="#666"
-            value={transactionID}
-            onChangeText={setTransactionID}
-            style={{ borderWidth: 1 }}
-          />
-
-          <TouchableOpacity
-            style={{ backgroundColor: "lightblue", padding: 10 }}
-            onPress={updateTransactionId}
-          >
-            <Text>Input Transaction ID</Text>
-          </TouchableOpacity> */}
-
             <View
               style={[styles.actionButtonsTop, { textTransform: "capitalize" }]}
             >

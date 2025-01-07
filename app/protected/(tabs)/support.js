@@ -65,24 +65,17 @@ export default function Support() {
 
   const openWhatsApp = async (phone) => {
     console.log("Whatsapp Pressed");
-    const cleanNumber = Number(phone.replace(/[^\d]/g, "")) / 10;
+    const cleanNumber = "+91" + phone;
     console.log(cleanNumber);
     const whatsappUrl = Platform.select({
       ios: `whatsapp://send?phone=${cleanNumber}`,
       android: `whatsapp://send?phone=${cleanNumber}`,
     });
 
+    const whatsappURL = `whatsapp://send?phone=${cleanNumber}`;
+
     try {
-      const supported = await Linking.canOpenURL(whatsappUrl);
-      if (supported) {
-        await Linking.openURL(whatsappUrl);
-      } else {
-        const storeUrl = Platform.select({
-          ios: `https://apps.apple.com/app/whatsapp-messenger/id310633997`,
-          android: `market://details?id=com.whatsapp`,
-        });
-        await Linking.openURL(storeUrl);
-      }
+      await Linking.openURL(whatsappURL);
     } catch (error) {
       console.error("Error opening WhatsApp:", error);
       Alert.alert("Error", "Error opening Whatsapp");

@@ -237,7 +237,6 @@ const DirectoryScreen = () => {
 
     const openWhatsApp = async (phone) => {
       console.log("Whatsapp Pressed");
-      // const cleanNumber = Number(phone.replace(/[^\d]/g, "")) / 10;
       const cleanNumber = "+91" + phone;
       console.log(cleanNumber);
       const whatsappUrl = Platform.select({
@@ -245,17 +244,10 @@ const DirectoryScreen = () => {
         android: `whatsapp://send?phone=${cleanNumber}`,
       });
 
+      const whatsappURL = `whatsapp://send?phone=${cleanNumber}`;
+
       try {
-        const supported = await Linking.canOpenURL(whatsappUrl);
-        if (supported) {
-          await Linking.openURL(whatsappUrl);
-        } else {
-          const storeUrl = Platform.select({
-            ios: `https://apps.apple.com/app/whatsapp-messenger/id310633997`,
-            android: `market://details?id=com.whatsapp`,
-          });
-          await Linking.openURL(storeUrl);
-        }
+        await Linking.openURL(whatsappURL);
       } catch (error) {
         console.error("Error opening WhatsApp:", error);
         Alert.alert("Error", "Error opening Whatsapp");
@@ -668,7 +660,7 @@ const DirectoryScreen = () => {
           onEndReached={() => {
             if (hasMore) loadMembers();
           }}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={0.1}
           ListFooterComponent={() =>
             loading ? <ActivityIndicator size="small" color="#0000ff" /> : null
           }
