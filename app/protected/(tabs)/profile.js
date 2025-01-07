@@ -25,6 +25,20 @@ export default function Profile() {
   const [upiCopied, setUpiCopied] = useState(false);
 
   const handleBankDetails = (text, setCopiedState) => {
+    // Determine the appropriate UPI URI
+    const upiURI =
+      userData?.support === true
+        ? headerData?.upi_uri_support ?? ""
+        : headerData?.upi_uri_normal ?? "";
+
+    // Extract the payment amount from the UPI URI
+    let amount = "N/A"; // Default if not found
+    if (upiURI) {
+      const queryString = upiURI.split("?")[1];
+      const params = new URLSearchParams(queryString);
+      amount = params.get("am") ?? "N/A"; // Extract 'am' or use default
+    }
+
     Alert.alert(
       "Transaction Verification",
       "After completing payment, please copy your transaction ID and paste it in the box above for verification. Click OK to copy Bank Details.",
@@ -37,7 +51,8 @@ export default function Profile() {
         {
           text: "OK",
           onPress: () => {
-            Clipboard.setString(text);
+            const combinedText = `${text}\nAmount: Rs. ${amount}`;
+            Clipboard.setString(combinedText);
             setCopiedState(true);
             setTimeout(() => {
               setCopiedState(false);
@@ -49,6 +64,20 @@ export default function Profile() {
   };
 
   const handleCopy = (text, setCopiedState) => {
+    // Determine the appropriate UPI URI
+    const upiURI =
+      userData?.support === true
+        ? headerData?.upi_uri_support ?? ""
+        : headerData?.upi_uri_normal ?? "";
+
+    // Extract the payment amount from the UPI URI
+    let amount = "N/A"; // Default if not found
+    if (upiURI) {
+      const queryString = upiURI.split("?")[1];
+      const params = new URLSearchParams(queryString);
+      amount = params.get("am") ?? "N/A"; // Extract 'am' or use default
+    }
+
     Alert.alert(
       "Transaction Verification",
       "After completing payment, please copy your transaction ID and paste it in the box above for verification. Click OK to copy UPI ID.",
@@ -61,7 +90,8 @@ export default function Profile() {
         {
           text: "OK",
           onPress: () => {
-            Clipboard.setString(text);
+            const combinedText = `${text}\nAmount: Rs. ${amount}`;
+            Clipboard.setString(combinedText);
             setCopiedState(true);
             setTimeout(() => {
               setCopiedState(false);
@@ -546,6 +576,27 @@ export default function Profile() {
             <Text style={styles.sectionTitle}>Payment Details</Text>
             <View style={styles.infoSection}>
               <View style={styles.infoRow}>
+                <Ionicons name="logo-usd" size={20} color="#A32638" />
+                <Text style={styles.infoText}>
+                  {(() => {
+                    const upiURI =
+                      userData?.support === true
+                        ? headerData?.upi_uri_support ?? ""
+                        : headerData?.upi_uri_normal ?? "";
+
+                    if (upiURI) {
+                      const queryString = upiURI.split("?")[1];
+                      const params = new URLSearchParams(queryString);
+                      const amount = params.get("am");
+                      return amount ? `Rs. ${amount}` : "Amount not specified";
+                    } else {
+                      return "UPI URI not available";
+                    }
+                  })()}
+                </Text>
+              </View>
+
+              <View style={styles.infoRow}>
                 <Ionicons name="alert-circle" size={20} color="#A32638" />
                 <Text style={styles.infoText}>
                   {userData.support === true
@@ -627,18 +678,6 @@ export default function Profile() {
                     <Ionicons name="phone-portrait" size={20} color="#A32638" />
                     <Text style={styles.infoText}>{headerData.upi_id}</Text>
                   </View>
-                  {/* <TouchableOpacity
-                    style={styles.copyButton}
-                    // onPress={() => handleCopy(headerData.upi_id, setUpiCopied)}
-                    onPress={() => handleUPI()}
-                  >
-                    <Ionicons
-                      // name={upiCopied ? "checkmark" : "copy"}
-                      name="cash-outline"
-                      size={20}
-                      color="#A32638"
-                    />
-                  </TouchableOpacity> */}
                 </View>
               )}
               {/* UPI ID */}
