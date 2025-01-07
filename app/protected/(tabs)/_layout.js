@@ -528,7 +528,7 @@ const _layout = () => {
         <Tabs.Screen name="members" options={{ title: "Network" }} />
         <Tabs.Screen name="index" options={{ title: "Home" }} />
         <Tabs.Screen name="profile" options={{ title: "Profile" }} />
-        <Tabs.Screen name="support" options={{ title: "SETS Team" }} />
+        <Tabs.Screen name="support" options={{ title: "SELS Team" }} />
       </Tabs>
     </AppContext.Provider>
   );

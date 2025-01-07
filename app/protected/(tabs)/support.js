@@ -660,7 +660,7 @@ export default function Support() {
           source={require("../../../assets/images/mysore_palace.png")}
           style={styles.headerImage}
         />
-        <Text style={styles.headerText}>SETS Team</Text>
+        <Text style={styles.headerText}>SELS Team</Text>
       </View>
 
       {/* Search Bar */}
