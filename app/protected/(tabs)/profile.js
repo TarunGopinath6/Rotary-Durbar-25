@@ -202,8 +202,8 @@ export default function Profile() {
   };
 
   // Example usage
-  const dateString = "2025-01-15-T00:00:00+00:00";
-  console.log(formatDate(dateString)); // Output: "15th January, 2025"
+  // const dateString = "2025-01-15T00:00:00+00:00";
+  // console.log(formatDate(dateString)); // Output: "15th January, 2025"
 
   let upiURI = null;
   if (userData?.support === true) upiURI = headerData?.upi_uri_support ?? "";

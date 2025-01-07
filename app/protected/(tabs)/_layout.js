@@ -460,7 +460,7 @@ const _layout = () => {
           } else {
             setUserData({ id: userDoc.id, ...userDoc });
             setHeaderData(headerDoc);
-            console.log(userDoc.name);
+            console.log("Name: ", userDoc.name);
           }
         } catch (error) {
           console.error("Unexpected error:", error);
