@@ -660,7 +660,7 @@ const DirectoryScreen = () => {
           onEndReached={() => {
             if (hasMore) loadMembers();
           }}
-          onEndReachedThreshold={0.1}
+          onEndReachedThreshold={0.8}
           ListFooterComponent={() =>
             loading ? <ActivityIndicator size="small" color="#0000ff" /> : null
           }
