@@ -2,11 +2,45 @@ import supabase from "../API/supabase";
 import axios from "axios";
 
 
+export const downloadGoogle = async (uid, photoUrl) => {
+    try {
+        const fileId = extractFileId(photoUrl);
+        if (!fileId) {
+            return { status: false }
+        }
+
+        const baseUrl = "https://docs.google.com/uc?export=download&confirm=1";
+
+        const session = axios.create({
+            withCredentials: true,
+        });
+
+        let response = await session.get(baseUrl, {
+            params: { id: fileId },
+            responseType: "blob",
+        });
+
+        let confirmToken = getConfirmToken(response.headers["set-cookie"]);
+        if (confirmToken) {
+            response = await session.get(baseUrl, {
+                params: { id: fileId, confirm: confirmToken },
+                responseType: "blob",
+            });
+        }
+
+        console.log(response);
+
+    } catch (error) {
+        return { status: false }
+    }
+}
+
+
 export const downloadFile = async (uid, photoUrl) => {
     try {
         const fileId = extractFileId(photoUrl);
         if (!fileId) {
-            return { status: false}
+            return { status: false }
         }
 
         const baseUrl = "https://docs.google.com/uc?export=download&confirm=1";
@@ -41,7 +75,7 @@ export const downloadFile = async (uid, photoUrl) => {
 };
 
 
-const extractFileId = (photoUrl) => {
+export const extractFileId = (photoUrl) => {
     const url = new URL(photoUrl);
     const params = new URLSearchParams(url.search);
     return params.get("id");
