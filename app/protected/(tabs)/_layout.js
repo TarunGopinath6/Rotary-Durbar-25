@@ -509,7 +509,7 @@ const _layout = () => {
             return <Ionicons name={iconName} size={size} color={color} />;
           },
           tabBarActiveTintColor: "#A32638",
-          tabBarInactiveTintColor: "#A9A9A9",
+          tabBarInactiveTintColor: "#767676",
           tabBarStyle: {
             height: Platform.select({
               ios: 60 + getBottomPadding(),

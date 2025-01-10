@@ -135,8 +135,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if(userData)
-      fetchPosts();
+    if (userData) fetchPosts();
   }, [refresh, userData]);
 
   // Filtered posts based on active tab
@@ -188,7 +187,13 @@ const App = () => {
             style={styles.headerImage}
           />
           <Text style={styles.headerText}>
-            Hi, Rtn.{userData?.name ?? "NA"}!
+            Hi, Rtn.{" "}
+            {userData?.name?.split(" ")[0] === "Dr."
+              ? `${userData?.name?.split(" ")[0]} ${
+                  userData?.name?.split(" ")[1]
+                }`
+              : userData?.name?.split(" ")[0] ?? "NA"}
+            !
           </Text>
           <Text style={styles.headerSubText}>
             {headerData?.event_name ?? "Event"}
@@ -230,9 +235,11 @@ const App = () => {
               <Text style={styles.messageLabel}>Message from</Text>
               <Text style={styles.governorName}>DGE Rtn. Vinod Sarogi</Text>
             </View>
-            <Text style={styles.governorMessageText}>
-              {headerData.governor_message}
-            </Text>
+            <ScrollView style={styles.governorMessageText} nestedScrollEnabled>
+              <Text style={styles.governorMessageText}>
+                {headerData.governor_message}
+              </Text>
+            </ScrollView>
           </View>
         )}
 
@@ -355,6 +362,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    height: 300,
   },
   governorMessageHeader: {
     marginBottom: 12,
@@ -379,7 +387,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   governorMessageText: {
-    fontSize: 15,
+    fontSize: 14,
     lineHeight: 24,
     color: "#333",
     fontFamily: "Inter_400Regular",
@@ -397,6 +405,7 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "#a32638",
     zIndex: 0,
+    overflow: "scroll",
   },
   overlay: {
     position: "absolute",
@@ -452,7 +461,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
   },
   headerDate: {
-    fontSize: 14,
+    fontSize: 15,
     padding: 3,
     color: "#FFBD1B",
     textAlign: "center",
