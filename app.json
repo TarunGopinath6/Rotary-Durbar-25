@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "icon": "./assets/images/durbar_1024_square.png",
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.dasorakel.rotaryclubdurbar"
     },
     "android": {
