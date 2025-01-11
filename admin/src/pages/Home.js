@@ -3,6 +3,7 @@ import { Container, Tabs, Tab, Typography } from "@mui/material"
 
 import Nofications from '../components/Dashboard/Nofications';
 import Posts from '../components/Dashboard/Posts';
+import Itineraries from '../components/Dashboard/Itineraries';
 
 const Home = () => {
   const [tabName, setTabName] = React.useState(0);
@@ -31,6 +32,7 @@ const Home = () => {
 
       {tabName === 0 && <Nofications />}
       {tabName === 1 && <Posts />}
+      {tabName === 2 && <Itineraries />}
 
     </Container>
   )

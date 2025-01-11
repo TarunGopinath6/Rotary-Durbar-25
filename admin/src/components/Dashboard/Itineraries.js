@@ -14,27 +14,38 @@ function SimpleModal({
   onSubmit,
   dataValue,
 }) {
-  const [text, setText] = React.useState(dataValue?.text || "");
-  const [event, setEvent] = React.useState(dataValue?.event || "");
-  const [time, setTime] = React.useState(dataValue?.time || "");
-  const [link, setLink] = React.useState(dataValue?.link || "");
-  const [file, setFile] = React.useState(dataValue?.image || "");
+  const [title, setTitle] = useState(dataValue?.title || "");
+  const [type, setType] = useState(dataValue?.type || "");
+  const [description, setDescription] = useState(dataValue?.description || "");
+  const [venue, setVenue] = useState(dataValue?.venue || "");
+  const [startTime, setStartTime] = useState(dataValue?.startTime || "");
+  const [endTime, setEndTime] = useState(dataValue?.endTime || "");
+  const [file, setFile] = useState(dataValue?.image || "");
 
   useEffect(() => {
     if (open) {
-
-      // Convert the incoming date string to the correct format for display
-      if (dataValue?.time) {
-        const localDate = new Date(dataValue?.time);
-        const formattedTime = localDate.toLocaleString('sv-SE');
-        setTime(formattedTime); // Set formatted time (without seconds and timezone)
+      // Convert the incoming date strings to the correct format for display
+      if (dataValue?.startTime) {
+        const localStartTime = new Date(dataValue?.startTime);
+        const formattedStartTime = localStartTime.toLocaleString('sv-SE')
+        console.log(dataValue?.startTime, formattedStartTime)
+        setStartTime(formattedStartTime); // Set formatted start time
       } else {
-        setTime(""); // Reset time field if no value is provided
+        setStartTime("");
       }
 
-      setText(dataValue?.text || "");
-      setEvent(dataValue?.event || "");
-      setLink(dataValue?.link || "");
+      if (dataValue?.endTime) {
+        const localEndTime = new Date(dataValue?.endTime);
+        const formattedEndTime = localEndTime.toLocaleString('sv-SE')
+        setEndTime(formattedEndTime); // Set formatted end time
+      } else {
+        setEndTime("");
+      }
+
+      setTitle(dataValue?.title || "");
+      setType(dataValue?.type || "");
+      setDescription(dataValue?.description || "");
+      setVenue(dataValue?.venue || "");
       setFile(dataValue?.image || "");
     }
   }, [open, dataValue]);
@@ -46,19 +57,24 @@ function SimpleModal({
 
   const handleSubmit = async () => {
     const formData = {
-      text,
-      event,
-      time: new Date(time).toISOString(),
-      link,
+      title,
+      type,
+      description,
+      venue,
+      startTime: new Date(startTime).toISOString(),
+      endTime: new Date(endTime).toISOString(),
     };
 
     if (onSubmit) {
       onSubmit(formData, dataValue?.id, file);
     }
-    setText("");
-    setEvent("");
-    setTime("");
-    setLink("");
+
+    setTitle("");
+    setType("");
+    setDescription("");
+    setVenue("");
+    setStartTime("");
+    setEndTime("");
     setFile(null); // Clear file input
     onClose(); // Close the modal
   };
@@ -82,48 +98,72 @@ function SimpleModal({
           Record Data
         </Typography>
 
-        {/* Text Field */}
+        {/* Title Field */}
         <TextField
           fullWidth
           variant="outlined"
-          label="Text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          label="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           sx={{ mb: 2 }}
         />
 
-        {/* Event Field */}
+        {/* Type Field */}
         <TextField
           fullWidth
           variant="outlined"
-          label="Event"
-          value={event}
-          onChange={(e) => setEvent(e.target.value)}
+          label="Type"
+          value={type}
+          onChange={(e) => setType(e.target.value)}
           sx={{ mb: 2 }}
         />
 
-        {/* Time Field (datetime-local) */}
+        {/* Description Field */}
         <TextField
           fullWidth
           variant="outlined"
-          label="Time"
+          label="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          sx={{ mb: 2 }}
+        />
+
+        {/* Venue Field */}
+        <TextField
+          fullWidth
+          variant="outlined"
+          label="Venue"
+          value={venue}
+          onChange={(e) => setVenue(e.target.value)}
+          sx={{ mb: 2 }}
+        />
+
+        {/* Start Time Field (datetime-local) */}
+        <TextField
+          fullWidth
+          variant="outlined"
+          label="Start Time"
           type="datetime-local"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
+          value={startTime}
+          onChange={(e) => setStartTime(e.target.value)}
           sx={{ mb: 2 }}
           InputLabelProps={{
             shrink: true,
           }}
         />
 
-        {/* Link Field */}
+        {/* End Time Field (datetime-local) */}
         <TextField
           fullWidth
           variant="outlined"
-          label="Link"
-          value={link}
-          onChange={(e) => setLink(e.target.value)}
+          label="End Time"
+          type="datetime-local"
+          value={endTime}
+          onChange={(e) => setEndTime(e.target.value)}
           sx={{ mb: 2 }}
+          InputLabelProps={{
+            shrink: true,
+          }}
         />
 
         <Button
@@ -160,16 +200,17 @@ function SimpleModal({
   );
 }
 
+
 function TextWithIconsCard({ record, handleUpdate, handleDelete }) {
   return (
     <Card sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, my: 3 }}>
       {/* Left Side: Text */}
       <CardContent sx={{ flex: 1, padding: "8px" }}>
         <Typography variant="h6" component="div" gutterBottom>
-          {record.text}
+          {record.title}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {new Date(record.time).toLocaleString()}
+          {new Date(record.startTime).toLocaleString()}
         </Typography>
       </CardContent>
 
@@ -187,10 +228,10 @@ function TextWithIconsCard({ record, handleUpdate, handleDelete }) {
 }
 
 
-const Posts = () => {
+const Itineraries = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
-  const emptyRecord = { text: '', id: null, event: '', link: '', image: '', time: '' }
+  const emptyRecord = { id: null,  title: '',  type: '', description: "", venue: '', event: '', startTime: '', endTime: '', image: '' }
   const [currentRecord, setCurrentRecord] = useState(emptyRecord);
 
   const [updateKey, setUpdateKey] = useState(null)
@@ -210,13 +251,13 @@ const Posts = () => {
       let publicUrl = ""
 
       const { data, errorFile } = await supabase.storage
-        .from('posts')
+        .from('itinerary')
         .upload(image.name, image);
 
       if (!errorFile) {
         // Get the public URL for the uploaded file
         publicUrl = supabase.storage
-          .from('posts')
+          .from('itinerary')
           .getPublicUrl(image.name);
       }
 
@@ -225,14 +266,14 @@ const Posts = () => {
 
     try {
       const { data, errorNotifs: errorPosts } = await supabase
-        .from("posts")
+        .from("itineraries")
         .upsert([{ id, ...value }]);
 
       if (errorPosts) {
         console.error("Error upserting record:", errorPosts);
       }
     } catch (error) {
-      console.error("Error updating posts:", error);
+      console.error("Error updating itineraries:", error);
     } finally {
       setLoading(false);
       setUpdateKey(new Date());
@@ -243,7 +284,7 @@ const Posts = () => {
     setLoading(true);
     try {
       const { data, errorDel } = await supabase
-        .from('posts')
+        .from('itineraries')
         .delete()
         .eq('id', id);
 
@@ -264,16 +305,16 @@ const Posts = () => {
     setLoading(true);
     try {
       const { data: postsData, errorNotifs: errorPosts } = await supabase
-        .from("posts")
+        .from("itineraries")
         .select("*")
-        .order("time", { ascending: false });
+        .order("startTime", { ascending: true });
       if (errorPosts) {
-        console.error("Error fetching posts:", errorPosts);
+        console.error("Error fetching itineraries:", errorPosts);
         return;
       }
       setNotifs(postsData);
     } catch (error) {
-      console.error("Error fetching posts:", error);
+      console.error("Error fetching itineraries:", error);
     } finally {
       setLoading(false);
     }
@@ -298,7 +339,7 @@ const Posts = () => {
             setModalOpen(true);
           }
         }>Add Record</Button>
-        <Button onClick={() => fetchDataAndExport('posts')}>Download All</Button>
+        <Button onClick={() => fetchDataAndExport('itineraries')}>Download All</Button>
       </ButtonGroup>
 
       <Box sx={{ my: 2 }}>
@@ -329,4 +370,4 @@ const Posts = () => {
   )
 }
 
-export default Posts
+export default Itineraries

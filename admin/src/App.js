@@ -34,7 +34,7 @@ function App() {
               <Route exact path="/" element={<Login />} />
               <Route exact path="/login" element={<Login />} />
               <Route exact path="/home" element={<RequireAuth> <Home /> </RequireAuth>} />
-              <Route exact path="/downloads" element={<Downloads />} />
+              {/* <Route exact path="/downloads" element={<Downloads />} /> */}
               <Route exact path="*" element={<NotFoundPage />} />
             </Routes>
           </LocalizationProvider>
