@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import supabase from "../API/supabase";
 import { auth } from "../API/firebaseConfig"
 import { useNavigate } from "react-router-dom";
+import { AppContext } from "../App"
 
 
 const RequireAuth = ({ children }) => {
 
-  const [authenticated, setAuthenticated] = useState(false);
+  const {authenticated, setAuthenticated } = useContext(AppContext);
   const navigate = useNavigate();
 
   useEffect(() => {

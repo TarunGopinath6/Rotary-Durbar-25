@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TextField, Button, Box, Typography, Container } from '@mui/material';
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../API/firebaseConfig"
@@ -12,6 +12,16 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const [headerHeight, setHeaderHeight] = useState(80);
+
+  useEffect(() => {
+    const appBar = document.getElementById("appbar");
+    if (appBar) {
+      setHeaderHeight(appBar.getBoundingClientRect().height);
+    }
+  }, []);
+
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -47,7 +57,7 @@ const LoginPage = () => {
         password
       );
       console.log("User logged in:", userCredential.user);
-      
+
       const { data: userDoc, error: errorUserDoc } = await supabase
         .from("members")
         .select("*")
@@ -56,7 +66,7 @@ const LoginPage = () => {
 
       if (errorUserDoc)
         throw errorUserDoc;
-      
+
       if (userDoc) {
         navigate('/home');
       } else {
@@ -83,38 +93,37 @@ const LoginPage = () => {
 
 
   return (
-    <Container maxWidth="sm">
-      <Box 
-        display="flex" 
-        flexDirection="column" 
-        alignItems="center" 
-        justifyContent="center" 
-        minHeight="100vh"
+    <Container maxWidth="sm" sx={{ height: `calc(100vh - ${headerHeight}px)`, display: "flex", alignItems: "center", justifyContent: "center" }} >
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
       >
         <Typography variant="h4" component="h1" gutterBottom>
           Login
         </Typography>
         <Box component="form" width="100%">
-          <TextField 
-            label="Email" 
-            type="email" 
-            fullWidth 
-            margin="normal" 
+          <TextField
+            label="Email"
+            type="email"
+            fullWidth
+            margin="normal"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <TextField 
-            label="Password" 
-            type="password" 
-            fullWidth 
-            margin="normal" 
+          <TextField
+            label="Password"
+            type="password"
+            fullWidth
+            margin="normal"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <Button 
-            variant="contained" 
-            color="primary" 
-            fullWidth 
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
             sx={{ marginTop: 2 }}
             onClick={handleLogin}
           >
