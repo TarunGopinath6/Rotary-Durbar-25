@@ -490,9 +490,9 @@ const ItineraryScreen = () => {
         />
         <View style={styles.headerContent}>
           <Text style={styles.headerText}>The Itinerary</Text>
-          <Text style={styles.headerSubText}>
+          {/* <Text style={styles.headerSubText}>
             {headerData?.event_name ?? "Event"}
-          </Text>
+          </Text> */}
         </View>
       </View>
 
