@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, initializeAuth } from "firebase/auth";
+import { getAuth, initializeAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -14,6 +14,17 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = initializeAuth(app, {});
+
+
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    // Now the user is persisted across page reloads
+    // You can perform authentication tasks here like login, signup, etc.
+    console.log('Persistence')
+  })
+  .catch((error) => {
+    console.error("Error setting persistence: ", error);
+  });
 
 // export const auth = getAuth(app);
 export const db = getFirestore(app);
