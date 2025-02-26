@@ -242,7 +242,7 @@ export default function Index() {
               style={styles.termsLink}
               onPress={() =>
                 Linking.openURL(
-                  "https://drive.google.com/file/d/1SJ1lczJCpVLOvskIyme0yGWGWJ3gEigX/view"
+                  "https://rotary-durbar-docs.onrender.com/#/terms-of-service"
                 )
               }
             >
@@ -253,7 +253,7 @@ export default function Index() {
               style={styles.termsLink}
               onPress={() =>
                 Linking.openURL(
-                  "https://drive.google.com/file/d/1BHHJJBvi1hY5MppxFqMIo7n9vpsr0OJ-/view"
+                  "https://rotary-durbar-docs.onrender.com/#/privacy-policy"
                 )
               }
             >
