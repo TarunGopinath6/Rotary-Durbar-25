@@ -1,9 +1,10 @@
 import './App.css';
 import React, { useState, createContext } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { HashRouter as Router, Routes, Route } from "react-router-dom";
 
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { Toaster } from 'react-hot-toast';
 
 import { ThemeProvider } from '@emotion/react';
 import { CssBaseline } from '@mui/material';
@@ -27,6 +28,7 @@ function App() {
     <AppContext.Provider value={{ authenticated, setAuthenticated }}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
+        <Toaster />
         <Router>
           <ResponsiveAppBar />
           <LocalizationProvider dateAdapter={AdapterDayjs}>

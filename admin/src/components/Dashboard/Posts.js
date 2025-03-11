@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Box, Button, ButtonGroup, Card, CardContent, Typography, IconButton, Modal, TextField } from '@mui/material'
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { toast } from "react-hot-toast";
 
 import supabase from "../../API/supabase";
 import { v4 as uuidv4 } from "uuid";
@@ -25,7 +26,7 @@ function SimpleModal({
 
       // Convert the incoming date string to the correct format for display
       if (dataValue?.time) {
-        const localDate = new Date(dataValue?.time);
+        const localDate = new Date(dataValue.time.replace(/Z|([+-]\d{2}:\d{2})$/, ""));
         const formattedTime = localDate.toLocaleString('sv-SE');
         setTime(formattedTime); // Set formatted time (without seconds and timezone)
       } else {
@@ -41,6 +42,7 @@ function SimpleModal({
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
+    console.log(selectedFile);
     setFile(selectedFile);
   };
 
@@ -48,7 +50,8 @@ function SimpleModal({
     const formData = {
       text,
       event,
-      time: new Date(time).toISOString(),
+      // time: new Date(time).toISOString(),
+      time,
       link,
     };
 
@@ -169,7 +172,7 @@ function TextWithIconsCard({ record, handleUpdate, handleDelete }) {
           {record.text}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {new Date(record.time).toLocaleString()}
+          {new Date(record.time.replace(/Z|([+-]\d{2}:\d{2})$/, "")).toLocaleString('sv-SE')}
         </Typography>
       </CardContent>
 
@@ -199,6 +202,24 @@ const Posts = () => {
 
   const handleModalClose = () => setModalOpen(false);
 
+  function generateSalt(length = 6) {
+    return Math.random().toString(36).substring(2, 2 + length);
+  }
+
+
+  function appendSaltToFilename(filename, length = 6) {
+    let salt = generateSalt(length);
+    let dotIndex = filename.lastIndexOf(".");
+
+    if (dotIndex === -1) {
+      return `${filename}_${salt}`; // If no extension, just append salt
+    }
+
+    let name = filename.substring(0, dotIndex);
+    let ext = filename.substring(dotIndex);
+    return `${name}_${salt}${ext}`;
+  }
+
   const handleModalSubmit = async (value, id, image) => {
     setLoading(true);
     console.log("Submitted value:", value, id);
@@ -206,18 +227,23 @@ const Posts = () => {
     if (id === null)
       id = uuidv4(); // Generate a random UUID
 
-    if (image) {
+    if (image.name) {
       let publicUrl = ""
+      const newName = appendSaltToFilename(image.name);
 
       const { data, errorFile } = await supabase.storage
         .from('posts')
-        .upload(image.name, image);
+        .upload(newName, image);
 
       if (!errorFile) {
         // Get the public URL for the uploaded file
         publicUrl = supabase.storage
           .from('posts')
-          .getPublicUrl(image.name);
+          .getPublicUrl(newName);
+        toast.success('Image upload success!')
+      }
+      else {
+        toast.error("Image upload failure!")
       }
 
       value['image'] = publicUrl.data.publicUrl;
@@ -230,9 +256,14 @@ const Posts = () => {
 
       if (errorPosts) {
         console.error("Error upserting record:", errorPosts);
+        toast.error('Error upserting record. Check console.')
+      }
+      else {
+        toast.success('Record upsert success!')
       }
     } catch (error) {
       console.error("Error updating posts:", error);
+      toast.error('Error upserting record. Check console.')
     } finally {
       setLoading(false);
       setUpdateKey(new Date());
@@ -240,6 +271,11 @@ const Posts = () => {
   };
 
   const handleDeleteCallback = async (id) => {
+
+    if (!window.confirm("Are you sure you want to delete this?")) {
+      return; // Exit if the user cancels
+    }
+
     setLoading(true);
     try {
       const { data, errorDel } = await supabase
@@ -249,11 +285,14 @@ const Posts = () => {
 
       if (errorDel) {
         console.error("Error deleting record:", errorDel);
+        toast.error('Error deleting record. Check console.')
       } else {
         console.log("Record deleted:", data);
+        toast.success('Record deleted!')
       }
     } catch (error) {
       console.error("Error deleing posts:", error);
+      toast.error('Error deleting record. Check console.')
     } finally {
       setLoading(false);
       setUpdateKey(new Date())

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Box, Button, ButtonGroup, Card, CardContent, Typography, IconButton, Modal, TextField } from '@mui/material'
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { toast } from "react-hot-toast";
 
 import supabase from "../../API/supabase";
 import { v4 as uuidv4 } from "uuid";
@@ -231,7 +232,7 @@ function TextWithIconsCard({ record, handleUpdate, handleDelete }) {
 const Itineraries = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
-  const emptyRecord = { id: null,  title: '',  type: '', description: "", venue: '', event: '', startTime: '', endTime: '', image: '' }
+  const emptyRecord = { id: null, title: '', type: '', description: "", venue: '', event: '', startTime: '', endTime: '', image: '' }
   const [currentRecord, setCurrentRecord] = useState(emptyRecord);
 
   const [updateKey, setUpdateKey] = useState(null)
@@ -240,6 +241,25 @@ const Itineraries = () => {
 
   const handleModalClose = () => setModalOpen(false);
 
+  function generateSalt(length = 6) {
+    return Math.random().toString(36).substring(2, 2 + length);
+  }
+
+
+  function appendSaltToFilename(filename, length = 6) {
+    let salt = generateSalt(length);
+    let dotIndex = filename.lastIndexOf(".");
+
+    if (dotIndex === -1) {
+      return `${filename}_${salt}`; // If no extension, just append salt
+    }
+
+    let name = filename.substring(0, dotIndex);
+    let ext = filename.substring(dotIndex);
+    return `${name}_${salt}${ext}`;
+  }
+
+
   const handleModalSubmit = async (value, id, image) => {
     setLoading(true);
     console.log("Submitted value:", value, id);
@@ -247,18 +267,23 @@ const Itineraries = () => {
     if (id === null)
       id = uuidv4(); // Generate a random UUID
 
-    if (image) {
+    if (image.name) {
       let publicUrl = ""
+      const newName = appendSaltToFilename(image.name);
 
       const { data, errorFile } = await supabase.storage
         .from('itinerary')
-        .upload(image.name, image);
+        .upload(newName, image);
 
       if (!errorFile) {
         // Get the public URL for the uploaded file
         publicUrl = supabase.storage
           .from('itinerary')
-          .getPublicUrl(image.name);
+          .getPublicUrl(newName);
+        toast.success('Image upload success!')
+      }
+      else {
+        toast.error("Image upload failure!")
       }
 
       value['image'] = publicUrl.data.publicUrl;
@@ -272,8 +297,12 @@ const Itineraries = () => {
       if (errorPosts) {
         console.error("Error upserting record:", errorPosts);
       }
+      else {
+        toast.success('Record upsert success!')
+      }
     } catch (error) {
       console.error("Error updating itineraries:", error);
+      toast.error('Error upserting record. Check console');
     } finally {
       setLoading(false);
       setUpdateKey(new Date());
@@ -281,6 +310,11 @@ const Itineraries = () => {
   };
 
   const handleDeleteCallback = async (id) => {
+
+    if (!window.confirm("Are you sure you want to delete this?")) {
+      return; // Exit if the user cancels
+    }
+
     setLoading(true);
     try {
       const { data, errorDel } = await supabase
@@ -290,11 +324,14 @@ const Itineraries = () => {
 
       if (errorDel) {
         console.error("Error deleting record:", errorDel);
+        toast.error('Error deleting record. Check console.')
       } else {
         console.log("Record deleted:", data);
+        toast.success('Record deleted!')
       }
     } catch (error) {
       console.error("Error deleing posts:", error);
+      toast.error('Error deleting record. Check console.')
     } finally {
       setLoading(false);
       setUpdateKey(new Date())

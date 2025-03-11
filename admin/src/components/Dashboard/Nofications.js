@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Box, Button, ButtonGroup, Card, CardContent, Typography, IconButton, Modal, TextField } from '@mui/material'
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { toast } from 'react-hot-toast';
 
 import supabase from "../../API/supabase";
 import { v4 as uuidv4 } from "uuid";
@@ -114,9 +115,14 @@ const Nofications = () => {
 
       if (errorNotifs) {
         console.error("Error upserting record:", errorNotifs);
+        toast.error('Error upserting record. Check console');
+      }
+      else {
+        toast.success('Record upsert success!')
       }
     } catch (error) {
       console.error("Error fetching notifs:", error);
+      toast.error('Error upserting record. Check console');
     } finally {
       setLoading(false);
       setUpdateKey(new Date());
@@ -124,6 +130,11 @@ const Nofications = () => {
   };
 
   const handleDeleteCallback = async (id) => {
+
+    if (!window.confirm("Are you sure you want to delete this?")) {
+      return; // Exit if the user cancels
+    }
+
     setLoading(true);
     try {
       const { data, errorDel } = await supabase
@@ -133,14 +144,17 @@ const Nofications = () => {
 
       if (errorDel) {
         console.error("Error deleting record:", errorDel);
+        toast.error('Error deleting record. Check console.')
       } else {
         console.log("Record deleted:", data);
+        toast.success('Record deleted!')
       }
     } catch (error) {
       console.error("Error fetching notifs:", error);
+      toast.error('Error deleting record. Check console.')
     } finally {
       setLoading(false);
-      setUpdateKey(new Date())
+      setUpdateKey(new Date());
     }
   };
 
